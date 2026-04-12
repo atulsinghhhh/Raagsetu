@@ -8,7 +8,12 @@
     "scheme": "raagsetu",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,6 +32,12 @@
     "plugins": [
       "expo-router",
       [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
@@ -35,9 +46,7 @@
             "imageWidth": 76
           }
         }
-      ],
-      "expo-audio",
-      "expo-asset"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

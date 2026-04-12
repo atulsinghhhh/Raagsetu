@@ -1,7 +1,23 @@
 import { useEffect, useState } from "react";
-import { View,Text,StyleSheet,FlatList,Image,TouchableOpacity,ActivityIndicator,Alert,RefreshControl, } from "react-native";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  Image, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Alert, 
+  RefreshControl,
+  ScrollView 
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from "expo-audio";
+import { setAudioModeAsync } from "expo-audio";
+import { player as globalPlayer } from "@/lib/audioManager";
+import { usePlayer } from "@/hook/usePlayer";
+import { useQueueStore } from "@/store/queueStore";
+import { Song } from "@/types/song";
+import { searchSongs } from "@/lib/api";
 
 const JAMENDO_CLIENT_ID = "e76dee42";
 
@@ -22,14 +38,15 @@ function formatDuration(seconds: number): string {
 }
 
 export default function HomeScreen() {
-  const [tracks, setTracks] = useState<Track[]>([]);
+  const [jamendoTracks, setJamendoTracks] = useState<Track[]>([]);
+  const [ytTracks, setYtTracks] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [playingId, setPlayingId] = useState<string | null>(null);
 
-  // Single player instance — we'll call player.replace() to switch tracks
-  const player = useAudioPlayer(null, { updateInterval: 500 });
-  const status = useAudioPlayerStatus(player);
+  const { currentSong, isPlaying, playSong, status } = usePlayer();
+  const { setQueue } = useQueueStore();
+
+  const playingId = currentSong?.videoId || null;
 
   // Configure audio session once
   useEffect(() => {
@@ -39,258 +56,179 @@ export default function HomeScreen() {
     });
   }, []);
 
-  // Detect when track finishes
-  useEffect(() => {
-    if (status.didJustFinish) {
-      setPlayingId(null);
-    }
-  }, [status.didJustFinish]);
-
-  const fetchTracks = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch(
-        `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=20&fuzzytags=popular&include=musicinfo&imagesize=300`
-      );
-      const json = await res.json();
-      if (json.headers?.status === "success") {
-        setTracks(json.results);
-      } else {
-        Alert.alert("Error", "Could not load songs.");
+      // 1. Fetch Jamendo tracks with a timeout or local catch
+      let jTracks: Track[] = [];
+      try {
+        const jamendoRes = await fetch(
+          `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=10&fuzzytags=popular&include=musicinfo&imagesize=300`
+        );
+        if (jamendoRes.ok) {
+          const jamendoJson = await jamendoRes.json();
+          if (jamendoJson.headers?.status === "success") {
+            jTracks = jamendoJson.results;
+            setJamendoTracks(jTracks);
+          }
+        }
+      } catch (err) {
+        console.error("Jamendo fetch failed:", err);
       }
-    } catch {
-      Alert.alert("Network Error", "Failed to fetch songs.");
+
+      // 2. Fetch YouTube tracks via our search API
+      let yTracks: Song[] = [];
+      try {
+        yTracks = await searchSongs("popular music 2024");
+        setYtTracks(yTracks);
+      } catch (err) {
+        console.error("YT fetch failed:", err);
+      }
+
+      // 3. Sync queue with whatever we successfully loaded
+      const jamendoToSong = jTracks.map((t: Track) => ({
+        videoId: t.id,
+        title: t.name,
+        artist: t.artist_name,
+        thumbnail: t.album_image,
+        duration: t.duration,
+      }));
+      
+      const fullQueue = [...jamendoToSong, ...yTracks];
+      if (fullQueue.length > 0) {
+        setQueue(fullQueue);
+      }
+
+    } catch (error) {
+       console.error("Global fetch error:", error);
     } finally {
+      // Always stop loading
       setLoading(false);
       setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    fetchTracks();
+    fetchData();
   }, []);
 
-  const handlePlay = (track: Track) => {
-    // Same track — toggle pause/resume
+  const handlePlayJamendo = (track: Track) => {
+    const song: Song = {
+      videoId: track.id,
+      title: track.name,
+      artist: track.artist_name,
+      thumbnail: track.album_image,
+      duration: track.duration,
+    };
+
     if (playingId === track.id) {
-      if (status.playing) {
-        player.pause();
-      } else {
-        player.play();
-      }
+      status.playing ? globalPlayer.pause() : globalPlayer.play();
       return;
     }
 
-    // Different track — replace source and auto-play
-    try {
-      player.replace({ uri: track.audio });
-      player.play();
-      setPlayingId(track.id);
-    } catch (err) {
-      console.log("Playback error:", err);
-      Alert.alert("Playback Error", "Could not play this track.");
+    const idx = jamendoTracks.findIndex(t => t.id === track.id);
+    playSong(song, idx);
+  };
+
+  const handlePlayYT = (song: Song, index: number) => {
+    if (playingId === song.videoId) {
+      status.playing ? globalPlayer.pause() : globalPlayer.play();
+      return;
     }
-  };
-
-  const handleStop = () => {
-    player.pause();
-    player.seekTo(0);
-    setPlayingId(null);
-  };
-
-  // Progress 0–1
-  const progress =
-    status.duration && status.duration > 0
-      ? status.currentTime / status.duration
-      : 0;
-
-  const renderFeatured = () => {
-    if (!tracks.length) return null;
-    const featured = tracks[0];
-    const isPlaying = playingId === featured.id;
-    const isThisPlaying = isPlaying && status.playing;
-
-    return (
-      <View style={styles.featuredCard}>
-        <Image source={{ uri: featured.album_image }} style={styles.featuredImage} />
-        <View style={styles.featuredOverlay}>
-          <View style={styles.featuredBadge}>
-            <Text style={styles.featuredBadgeText}>🔥 Featured</Text>
-          </View>
-
-          <Text style={styles.featuredTitle} numberOfLines={2}>
-            {featured.name}
-          </Text>
-          <Text style={styles.featuredArtist}>{featured.artist_name}</Text>
-
-          <View style={styles.featuredMeta}>
-            <Text style={styles.featuredDuration}>
-              ⏱ {formatDuration(featured.duration)}
-            </Text>
-            {featured.musicinfo?.tags?.genres?.[0] && (
-              <View style={styles.genreChip}>
-                <Text style={styles.genreText}>
-                  {featured.musicinfo.tags.genres[0]}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Progress bar */}
-          {isPlaying && status.duration > 0 && (
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: `${progress * 100}%` as any }]} />
-            </View>
-          )}
-
-          <View style={styles.featuredActions}>
-            <TouchableOpacity
-              style={[styles.playBtn, isPlaying && styles.playBtnActive]}
-              onPress={() => handlePlay(featured)}
-            >
-              {isPlaying && status.isBuffering ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.playBtnText}>
-                  {isThisPlaying ? "⏸  Pause" : "▶  Play"}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            {isPlaying && (
-              <TouchableOpacity style={styles.stopBtn} onPress={handleStop}>
-                <Text style={styles.stopBtnText}>⏹</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const renderTrack = ({ item, index }: { item: Track; index: number }) => {
-    const isPlaying = playingId === item.id;
-    const isThisPlaying = isPlaying && status.playing;
-
-    return (
-      <TouchableOpacity
-        style={[styles.trackRow, isPlaying && styles.trackRowActive]}
-        onPress={() => handlePlay(item)}
-        activeOpacity={0.75}
-      >
-        {/* Index / playing indicator */}
-        <View style={styles.trackIndexWrap}>
-          {isPlaying && status.isBuffering ? (
-            <ActivityIndicator color="#7c3aed" size="small" />
-          ) : isThisPlaying ? (
-            <Text style={styles.trackPlaying}>♪</Text>
-          ) : (
-            <Text style={styles.trackIndex}>{index + 1}</Text>
-          )}
-        </View>
-
-        <Image source={{ uri: item.album_image }} style={styles.trackArt} />
-
-        <View style={styles.trackInfo}>
-          <Text
-            style={[styles.trackName, isPlaying && styles.trackNameActive]}
-            numberOfLines={1}
-          >
-            {item.name}
-          </Text>
-          <Text style={styles.trackArtist} numberOfLines={1}>
-            {item.artist_name}
-          </Text>
-          {item.musicinfo?.tags?.genres?.[0] && (
-            <Text style={styles.trackGenre}>
-              {item.musicinfo.tags.genres[0]}
-            </Text>
-          )}
-
-          {/* Mini progress bar */}
-          {isPlaying && status.duration > 0 && (
-            <View style={styles.miniProgressBg}>
-              <View
-                style={[
-                  styles.miniProgressFill,
-                  { width: `${progress * 100}%` as any },
-                ]}
-              />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.trackRight}>
-          <Text style={styles.trackDuration}>
-            {isPlaying && status.currentTime > 0
-              ? formatDuration(status.currentTime)
-              : formatDuration(item.duration)}
-          </Text>
-          <View style={[styles.playCircle, isPlaying && styles.playCircleActive]}>
-            <Text style={styles.playCircleIcon}>
-              {isThisPlaying ? "⏸" : "▶"}
-            </Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
+    // Set index relative to YT list (or total queue)
+    playSong(song, jamendoTracks.length + index);
   };
 
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator color="#7c3aed" size="large" />
-        <Text style={styles.loadingText}>Loading songs…</Text>
+        <Text style={styles.loadingText}>Loading music…</Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.blobTop} />
-      <View style={styles.blobBottom} />
-
-      <FlatList
-        data={tracks.slice(1)}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTrack}
+      <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); fetchTracks(); }}
+            onRefresh={() => { setRefreshing(true); fetchData(); }}
             tintColor="#7c3aed"
-            colors={["#7c3aed"]}
           />
         }
-        ListHeaderComponent={
-          <>
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.greeting}>Good evening 🎵</Text>
-                <Text style={styles.pageTitle}>Discover Music</Text>
-              </View>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarEmoji}>🎧</Text>
-              </View>
-            </View>
-
-            {renderFeatured()}
-
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>Popular Tracks</Text>
-              <Text style={styles.sectionCount}>{tracks.length - 1} songs</Text>
-            </View>
-          </>
-        }
-        ListFooterComponent={
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Powered by <Text style={styles.footerBrand}>Jamendo</Text>
-            </Text>
+      >
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Good evening 🎵</Text>
+            <Text style={styles.pageTitle}>Raagsetu</Text>
           </View>
-        }
-      />
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarEmoji}>🎹</Text>
+          </View>
+        </View>
+
+        {/* YouTube Section */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>YouTube Trending</Text>
+        </View>
+        
+        <FlatList
+          horizontal
+          data={ytTracks}
+          keyExtractor={(item) => item.videoId}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
+          renderItem={({ item, index }) => (
+            <TouchableOpacity 
+              style={styles.ytCard}
+              onPress={() => handlePlayYT(item, index)}
+            >
+              <Image source={{ uri: item.thumbnail }} style={styles.ytImage} />
+              <View style={styles.ytInfo}>
+                <Text style={styles.ytTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.ytArtist} numberOfLines={1}>{item.artist}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+
+        {/* Jamendo Section */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Jamendo Favorites</Text>
+        </View>
+
+        {jamendoTracks.map((item, index) => {
+          const isPlaying = playingId === item.id;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.trackRow, isPlaying && styles.trackRowActive]}
+              onPress={() => handlePlayJamendo(item)}
+              activeOpacity={0.75}
+            >
+              <Image source={{ uri: item.album_image }} style={styles.trackArt} />
+              <View style={styles.trackInfo}>
+                <Text style={[styles.trackName, isPlaying && styles.trackNameActive]} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={styles.trackArtist} numberOfLines={1}>{item.artist_name}</Text>
+              </View>
+              <View style={styles.trackRight}>
+                <Text style={styles.trackDuration}>{formatDuration(item.duration)}</Text>
+                <View style={[styles.playCircle, isPlaying && styles.playCircleActive]}>
+                  <Text style={styles.playCircleIcon}>{(isPlaying && status.playing) ? "⏸" : "▶"}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Ready to play your favorite tunes.</Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -305,30 +243,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: { color: "#7878a8", fontSize: 15 },
-
-  blobTop: {
-    position: "absolute",
-    top: -80,
-    right: -60,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: "#7c3aed",
-    opacity: 0.12,
-  },
-  blobBottom: {
-    position: "absolute",
-    bottom: -60,
-    left: -80,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: "#06b6d4",
-    opacity: 0.1,
-  },
-
-  listContent: { paddingBottom: 32 },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -355,118 +269,40 @@ const styles = StyleSheet.create({
     borderColor: "#7c3aed55",
   },
   avatarEmoji: { fontSize: 22 },
-
-  featuredCard: {
-    marginHorizontal: 20,
-    borderRadius: 20,
-    overflow: "hidden",
-    marginBottom: 24,
-    height: 240,
-    shadowColor: "#7c3aed",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  featuredImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
-  },
-  featuredOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10,10,20,0.74)",
-    padding: 20,
-    justifyContent: "flex-end",
-  },
-  featuredBadge: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    backgroundColor: "#7c3aed",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  featuredBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-  featuredTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#ffffff",
-    letterSpacing: -0.3,
-    marginBottom: 4,
-  },
-  featuredArtist: { fontSize: 13, color: "#a0a0d8", marginBottom: 8 },
-  featuredMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 10,
-  },
-  featuredDuration: { color: "#8080b0", fontSize: 12 },
-  genreChip: {
-    backgroundColor: "#ffffff22",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  genreText: {
-    color: "#c0c0e8",
-    fontSize: 11,
-    fontWeight: "600",
-    textTransform: "capitalize",
-  },
-  progressBarBg: {
-    height: 3,
-    backgroundColor: "#ffffff25",
-    borderRadius: 2,
-    marginBottom: 10,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#7c3aed",
-    borderRadius: 2,
-  },
-  featuredActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  playBtn: {
-    backgroundColor: "#7c3aed",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-    minWidth: 100,
-    alignItems: "center",
-    shadowColor: "#7c3aed",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  playBtnActive: { backgroundColor: "#5b21b6" },
-  playBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-  stopBtn: {
-    backgroundColor: "#ffffff18",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stopBtnText: { fontSize: 16 },
-
   sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 20,
-    marginBottom: 12,
+    marginTop: 24,
+    marginBottom: 16,
   },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: "#e2e2ff" },
-  sectionCount: { fontSize: 13, color: "#5a5a8a" },
+  sectionTitle: { fontSize: 20, fontWeight: "700", color: "#e2e2ff" },
+  
+  ytCard: {
+    width: 160,
+    marginRight: 16,
+    backgroundColor: "#16162a",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  ytImage: {
+    width: "100%",
+    height: 100,
+    backgroundColor: "#1a1a30",
+  },
+  ytInfo: {
+    padding: 10,
+  },
+  ytTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#d0d0f0",
+    lineHeight: 18,
+    height: 36,
+  },
+  ytArtist: {
+    fontSize: 11,
+    color: "#6868a0",
+    marginTop: 4,
+  },
 
   trackRow: {
     flexDirection: "row",
@@ -478,9 +314,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   trackRowActive: { backgroundColor: "#1a1a38" },
-  trackIndexWrap: { width: 28, alignItems: "center", marginRight: 10 },
-  trackIndex: { color: "#4a4a7a", fontSize: 13, fontWeight: "600" },
-  trackPlaying: { color: "#7c3aed", fontSize: 18, fontWeight: "800" },
   trackArt: {
     width: 50,
     height: 50,
@@ -491,20 +324,7 @@ const styles = StyleSheet.create({
   trackInfo: { flex: 1, marginRight: 8 },
   trackName: { fontSize: 14, fontWeight: "600", color: "#d0d0f0", marginBottom: 2 },
   trackNameActive: { color: "#a78bfa" },
-  trackArtist: { fontSize: 12, color: "#6868a0", marginBottom: 2 },
-  trackGenre: { fontSize: 10, color: "#4a4a70", textTransform: "capitalize" },
-  miniProgressBg: {
-    height: 2,
-    backgroundColor: "#2a2a50",
-    borderRadius: 1,
-    marginTop: 5,
-    overflow: "hidden",
-  },
-  miniProgressFill: {
-    height: "100%",
-    backgroundColor: "#7c3aed",
-    borderRadius: 1,
-  },
+  trackArtist: { fontSize: 12, color: "#6868a0" },
   trackRight: { alignItems: "flex-end", gap: 6 },
   trackDuration: { color: "#5a5a8a", fontSize: 11 },
   playCircle: {
@@ -520,7 +340,6 @@ const styles = StyleSheet.create({
   playCircleActive: { backgroundColor: "#7c3aed", borderColor: "#7c3aed" },
   playCircleIcon: { fontSize: 12, color: "#fff" },
 
-  footer: { alignItems: "center", paddingTop: 24, paddingBottom: 8 },
+  footer: { alignItems: "center", paddingVertical: 40 },
   footerText: { color: "#4a4a6a", fontSize: 12 },
-  footerBrand: { color: "#7c3aed", fontWeight: "700" },
 });
