@@ -12,11 +12,9 @@ import {
   Platform,
   Animated,
   ActivityIndicator,
-  Dimensions,
+  ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
-
-const { width, height } = Dimensions.get("window");
 
 function LoginScreen() {
   const { signIn } = useAuth();
@@ -24,25 +22,14 @@ function LoginScreen() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    Animated.spring(buttonScale, {
-      toValue: 0.96,
-      useNativeDriver: true,
-      speed: 30,
-    }).start();
+    Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true, speed: 30 }).start();
   };
-
   const handlePressOut = () => {
-    Animated.spring(buttonScale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 20,
-    }).start();
+    Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 20 }).start();
   };
 
   const handleSignIn = async () => {
@@ -70,8 +57,12 @@ function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.flex}
       >
-        <View style={styles.container}>
-          {/* Logo / Brand */}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Brand */}
           <View style={styles.brandRow}>
             <View style={styles.logoCircle}>
               <Text style={styles.logoEmoji}>🎵</Text>
@@ -90,12 +81,7 @@ function LoginScreen() {
             {/* Email */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Email</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  emailFocused && styles.inputWrapperFocused,
-                ]}
-              >
+              <View style={styles.inputWrapper}>
                 <Text style={styles.inputIcon}>✉️</Text>
                 <TextInput
                   style={styles.input}
@@ -105,8 +91,6 @@ function LoginScreen() {
                   autoCapitalize="none"
                   value={email}
                   onChangeText={setEmail}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
                 />
               </View>
             </View>
@@ -114,12 +98,7 @@ function LoginScreen() {
             {/* Password */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Password</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  passwordFocused && styles.inputWrapperFocused,
-                ]}
-              >
+              <View style={styles.inputWrapper}>
                 <Text style={styles.inputIcon}>🔒</Text>
                 <TextInput
                   style={styles.input}
@@ -128,8 +107,6 @@ function LoginScreen() {
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -148,9 +125,7 @@ function LoginScreen() {
             </TouchableOpacity>
 
             {/* Sign In Button */}
-            <Animated.View
-              style={{ transform: [{ scale: buttonScale }], marginTop: 8 }}
-            >
+            <Animated.View style={{ transform: [{ scale: buttonScale }], marginTop: 8 }}>
               <TouchableOpacity
                 style={[styles.signInBtn, loading && styles.signInBtnDisabled]}
                 onPress={handleSignIn}
@@ -191,7 +166,7 @@ function LoginScreen() {
             <Text style={styles.footerLink}>Terms</Text> &{" "}
             <Text style={styles.footerLink}>Privacy</Text>
           </Text>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -204,7 +179,6 @@ const styles = StyleSheet.create({
   },
   flex: { flex: 1 },
 
-  /* Decorative blobs */
   blobTopRight: {
     position: "absolute",
     top: -80,
@@ -226,13 +200,14 @@ const styles = StyleSheet.create({
     opacity: 0.14,
   },
 
-  container: {
-    flex: 1,
+  scrollContent: {
     paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 48,
     justifyContent: "center",
+    flexGrow: 1,
   },
 
-  /* Brand */
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -257,7 +232,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* Headlines */
   headline: {
     fontSize: 32,
     fontWeight: "800",
@@ -272,7 +246,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  /* Card */
   card: {
     backgroundColor: "#13132a",
     borderRadius: 24,
@@ -286,7 +259,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
 
-  /* Fields */
   fieldGroup: { marginBottom: 18 },
   label: {
     fontSize: 13,
@@ -305,25 +277,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 52,
   },
-  inputWrapperFocused: {
-    borderColor: "#7c3aed",
-    shadowColor: "#7c3aed",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
-  },
   inputIcon: { fontSize: 16, marginRight: 10 },
   input: {
     flex: 1,
     fontSize: 15,
     color: "#e2e2ff",
-    height: "100%",
+    paddingVertical: 0,
   },
   eyeButton: { padding: 4 },
   eyeIcon: { fontSize: 18 },
 
-  /* Forgot */
   forgotRow: { alignSelf: "flex-end", marginBottom: 4 },
   forgotText: {
     fontSize: 13,
@@ -331,7 +294,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /* Sign In Button */
   signInBtn: {
     backgroundColor: "#7c3aed",
     borderRadius: 14,
@@ -352,7 +314,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* Divider */
   divider: {
     flexDirection: "row",
     alignItems: "center",
@@ -366,7 +327,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /* Sign up */
   signupRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -379,7 +339,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* Footer */
   footer: {
     textAlign: "center",
     color: "#4a4a6a",

@@ -1,23 +1,8 @@
 import { useAuth } from "@/context/AuthProvider";
 import { useState, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  Alert,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
-  ActivityIndicator,
-  Dimensions,
-  ScrollView,
-} from "react-native";
+import { Alert,View,Text,TextInput,TouchableOpacity,StyleSheet,KeyboardAvoidingView,Platform,Animated,ActivityIndicator,ScrollView,} from "react-native";
 import { Link } from "expo-router";
-
-const { width } = Dimensions.get("window");
 
 function SignupScreen() {
   const { signUp } = useAuth();
@@ -27,34 +12,20 @@ function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [confirmFocused, setConfirmFocused] = useState(false);
 
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    Animated.spring(buttonScale, {
-      toValue: 0.96,
-      useNativeDriver: true,
-      speed: 30,
-    }).start();
+    Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true, speed: 30 }).start();
   };
-
   const handlePressOut = () => {
-    Animated.spring(buttonScale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 20,
-    }).start();
+    Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 20 }).start();
   };
 
   const getPasswordStrength = () => {
     if (!password) return { label: "", color: "transparent", width: "0%" };
-    if (password.length < 6)
-      return { label: "Weak", color: "#ef4444", width: "30%" };
-    if (password.length < 10)
-      return { label: "Fair", color: "#f59e0b", width: "60%" };
+    if (password.length < 6) return { label: "Weak", color: "#ef4444", width: "30%" };
+    if (password.length < 10) return { label: "Fair", color: "#f59e0b", width: "60%" };
     return { label: "Strong", color: "#22c55e", width: "100%" };
   };
 
@@ -70,10 +41,7 @@ function SignupScreen() {
       return;
     }
     if (password.length < 6) {
-      Alert.alert(
-        "Weak Password",
-        "Password must be at least 6 characters long."
-      );
+      Alert.alert("Weak Password", "Password must be at least 6 characters long.");
       return;
     }
     setLoading(true);
@@ -117,15 +85,11 @@ function SignupScreen() {
 
           {/* Card */}
           <View style={styles.card}>
+
             {/* Email */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Email</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  emailFocused && styles.inputWrapperFocused,
-                ]}
-              >
+              <View style={styles.inputWrapper}>
                 <Text style={styles.inputIcon}>✉️</Text>
                 <TextInput
                   style={styles.input}
@@ -135,8 +99,6 @@ function SignupScreen() {
                   autoCapitalize="none"
                   value={email}
                   onChangeText={setEmail}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
                 />
               </View>
             </View>
@@ -144,12 +106,7 @@ function SignupScreen() {
             {/* Password */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Password</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  passwordFocused && styles.inputWrapperFocused,
-                ]}
-              >
+              <View style={styles.inputWrapper}>
                 <Text style={styles.inputIcon}>🔒</Text>
                 <TextInput
                   style={styles.input}
@@ -158,8 +115,6 @@ function SignupScreen() {
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -175,19 +130,14 @@ function SignupScreen() {
               {password.length > 0 && (
                 <View style={styles.strengthContainer}>
                   <View style={styles.strengthBarBg}>
-                    <Animated.View
+                    <View
                       style={[
                         styles.strengthBar,
-                        {
-                          width: strength.width as any,
-                          backgroundColor: strength.color,
-                        },
+                        { width: strength.width as any, backgroundColor: strength.color },
                       ]}
                     />
                   </View>
-                  <Text
-                    style={[styles.strengthLabel, { color: strength.color }]}
-                  >
+                  <Text style={[styles.strengthLabel, { color: strength.color }]}>
                     {strength.label}
                   </Text>
                 </View>
@@ -200,7 +150,6 @@ function SignupScreen() {
               <View
                 style={[
                   styles.inputWrapper,
-                  confirmFocused && styles.inputWrapperFocused,
                   confirmPassword.length > 0 &&
                     password !== confirmPassword &&
                     styles.inputWrapperError,
@@ -214,8 +163,6 @@ function SignupScreen() {
                   secureTextEntry={!showConfirm}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  onFocus={() => setConfirmFocused(true)}
-                  onBlur={() => setConfirmFocused(false)}
                 />
                 <TouchableOpacity
                   onPress={() => setShowConfirm(!showConfirm)}
@@ -233,20 +180,16 @@ function SignupScreen() {
 
             {/* Perks row */}
             <View style={styles.perksRow}>
-              {["Free forever plan", "No credit card needed", "Cancel anytime"].map(
-                (perk) => (
-                  <View key={perk} style={styles.perkChip}>
-                    <Text style={styles.perkCheck}>✓</Text>
-                    <Text style={styles.perkText}>{perk}</Text>
-                  </View>
-                )
-              )}
+              {["Free forever plan", "No credit card needed", "Cancel anytime"].map((perk) => (
+                <View key={perk} style={styles.perkChip}>
+                  <Text style={styles.perkCheck}>✓</Text>
+                  <Text style={styles.perkText}>{perk}</Text>
+                </View>
+              ))}
             </View>
 
             {/* Sign Up Button */}
-            <Animated.View
-              style={{ transform: [{ scale: buttonScale }], marginTop: 4 }}
-            >
+            <Animated.View style={{ transform: [{ scale: buttonScale }], marginTop: 4 }}>
               <TouchableOpacity
                 style={[styles.signUpBtn, loading && styles.signUpBtnDisabled]}
                 onPress={handleSignUp}
@@ -300,7 +243,6 @@ const styles = StyleSheet.create({
   },
   flex: { flex: 1 },
 
-  /* Decorative blobs */
   blobTopLeft: {
     position: "absolute",
     top: -60,
@@ -328,7 +270,6 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
 
-  /* Brand */
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -353,7 +294,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* Headlines */
   headline: {
     fontSize: 32,
     fontWeight: "800",
@@ -368,7 +308,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  /* Card */
   card: {
     backgroundColor: "#13132a",
     borderRadius: 24,
@@ -382,7 +321,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
 
-  /* Fields */
   fieldGroup: { marginBottom: 18 },
   label: {
     fontSize: 13,
@@ -401,14 +339,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 52,
   },
-  inputWrapperFocused: {
-    borderColor: "#7c3aed",
-    shadowColor: "#7c3aed",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
-  },
   inputWrapperError: {
     borderColor: "#ef4444",
   },
@@ -417,12 +347,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: "#e2e2ff",
-    height: "100%",
+    paddingVertical: 0,
   },
   eyeButton: { padding: 4 },
   eyeIcon: { fontSize: 18 },
 
-  /* Password strength */
   strengthContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -447,7 +376,6 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
 
-  /* Error */
   errorText: {
     color: "#ef4444",
     fontSize: 12,
@@ -455,7 +383,6 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
 
-  /* Perks */
   perksRow: {
     gap: 6,
     marginBottom: 16,
@@ -476,7 +403,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  /* Sign Up Button */
   signUpBtn: {
     backgroundColor: "#7c3aed",
     borderRadius: 14,
@@ -497,7 +423,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* Divider */
   divider: {
     flexDirection: "row",
     alignItems: "center",
@@ -511,7 +436,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /* Login link */
   loginRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -524,7 +448,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* Footer */
   footer: {
     textAlign: "center",
     color: "#4a4a6a",
