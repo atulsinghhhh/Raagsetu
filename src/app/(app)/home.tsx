@@ -1,20 +1,7 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  Dimensions,
-} from "react-native";
+import { useEffect, useState } from "react";
+import { View,Text,StyleSheet,FlatList,Image,TouchableOpacity,ActivityIndicator,Alert,RefreshControl, } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Audio, AVPlaybackStatus } from "expo-av";
-
-const { width } = Dimensions.get("window");
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from "expo-audio";
 
 const JAMENDO_CLIENT_ID = "e76dee42";
 
@@ -22,21 +9,15 @@ interface Track {
   id: string;
   name: string;
   artist_name: string;
-  album_name: string;
   album_image: string;
   audio: string;
   duration: number;
-  releasedate: string;
-  musicinfo?: {
-    tags?: {
-      genres?: string[];
-    };
-  };
+  musicinfo?: { tags?: { genres?: string[] } };
 }
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+  const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
@@ -44,92 +25,26 @@ export default function HomeScreen() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Audio playback state
-  const soundRef = useRef<Audio.Sound | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [buffering, setBuffering] = useState(false);
-  const [positionMs, setPositionMs] = useState(0);
-  const [durationMs, setDurationMs] = useState(0);
 
-  // Setup audio mode once
+  // Single player instance — we'll call player.replace() to switch tracks
+  const player = useAudioPlayer(null, { updateInterval: 500 });
+  const status = useAudioPlayerStatus(player);
+
+  // Configure audio session once
   useEffect(() => {
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
     });
-
-    return () => {
-      // Cleanup on unmount
-      stopAndUnload();
-    };
   }, []);
 
-  const stopAndUnload = async () => {
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
-      } catch (_) {}
-      soundRef.current = null;
-    }
-    setPlayingId(null);
-    setPositionMs(0);
-    setDurationMs(0);
-  };
-
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) {
-      setBuffering(false);
-      return;
-    }
-    setBuffering(status.isBuffering);
-    setPositionMs(status.positionMillis ?? 0);
-    setDurationMs(status.durationMillis ?? 0);
-
+  // Detect when track finishes
+  useEffect(() => {
     if (status.didJustFinish) {
       setPlayingId(null);
-      setPositionMs(0);
     }
-  }, []);
-
-  const handlePlay = async (track: Track) => {
-    // If same track — toggle pause/resume
-    if (playingId === track.id && soundRef.current) {
-      const status = await soundRef.current.getStatusAsync();
-      if (status.isLoaded && status.isPlaying) {
-        await soundRef.current.pauseAsync();
-        setPlayingId(null);
-      } else if (status.isLoaded) {
-        await soundRef.current.playAsync();
-        setPlayingId(track.id);
-      }
-      return;
-    }
-
-    // Unload previous
-    await stopAndUnload();
-
-    setBuffering(true);
-    setPlayingId(track.id);
-
-    try {
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: track.audio },
-        { shouldPlay: true, progressUpdateIntervalMillis: 500 },
-        onPlaybackStatusUpdate
-      );
-      soundRef.current = sound;
-    } catch (err) {
-      console.log("Audio playback error:", err);
-      Alert.alert("Playback Error", "Could not play this track.");
-      setPlayingId(null);
-      setBuffering(false);
-    }
-  };
+  }, [status.didJustFinish]);
 
   const fetchTracks = async () => {
     try {
@@ -142,7 +57,7 @@ export default function HomeScreen() {
       } else {
         Alert.alert("Error", "Could not load songs.");
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Network Error", "Failed to fetch songs.");
     } finally {
       setLoading(false);
@@ -154,18 +69,45 @@ export default function HomeScreen() {
     fetchTracks();
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchTracks();
+  const handlePlay = (track: Track) => {
+    // Same track — toggle pause/resume
+    if (playingId === track.id) {
+      if (status.playing) {
+        player.pause();
+      } else {
+        player.play();
+      }
+      return;
+    }
+
+    // Different track — replace source and auto-play
+    try {
+      player.replace({ uri: track.audio });
+      player.play();
+      setPlayingId(track.id);
+    } catch (err) {
+      console.log("Playback error:", err);
+      Alert.alert("Playback Error", "Could not play this track.");
+    }
   };
 
-  // Progress bar percentage
-  const progress = durationMs > 0 ? positionMs / durationMs : 0;
+  const handleStop = () => {
+    player.pause();
+    player.seekTo(0);
+    setPlayingId(null);
+  };
+
+  // Progress 0–1
+  const progress =
+    status.duration && status.duration > 0
+      ? status.currentTime / status.duration
+      : 0;
 
   const renderFeatured = () => {
     if (!tracks.length) return null;
     const featured = tracks[0];
     const isPlaying = playingId === featured.id;
+    const isThisPlaying = isPlaying && status.playing;
 
     return (
       <View style={styles.featuredCard}>
@@ -174,6 +116,7 @@ export default function HomeScreen() {
           <View style={styles.featuredBadge}>
             <Text style={styles.featuredBadgeText}>🔥 Featured</Text>
           </View>
+
           <Text style={styles.featuredTitle} numberOfLines={2}>
             {featured.name}
           </Text>
@@ -192,8 +135,8 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {/* Progress bar for featured track */}
-          {isPlaying && durationMs > 0 && (
+          {/* Progress bar */}
+          {isPlaying && status.duration > 0 && (
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${progress * 100}%` as any }]} />
             </View>
@@ -204,16 +147,17 @@ export default function HomeScreen() {
               style={[styles.playBtn, isPlaying && styles.playBtnActive]}
               onPress={() => handlePlay(featured)}
             >
-              {buffering && isPlaying ? (
+              {isPlaying && status.isBuffering ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <Text style={styles.playBtnText}>
-                  {isPlaying ? "⏸  Pause" : "▶  Play"}
+                  {isThisPlaying ? "⏸  Pause" : "▶  Play"}
                 </Text>
               )}
             </TouchableOpacity>
+
             {isPlaying && (
-              <TouchableOpacity style={styles.stopBtn} onPress={stopAndUnload}>
+              <TouchableOpacity style={styles.stopBtn} onPress={handleStop}>
                 <Text style={styles.stopBtnText}>⏹</Text>
               </TouchableOpacity>
             )}
@@ -225,6 +169,7 @@ export default function HomeScreen() {
 
   const renderTrack = ({ item, index }: { item: Track; index: number }) => {
     const isPlaying = playingId === item.id;
+    const isThisPlaying = isPlaying && status.playing;
 
     return (
       <TouchableOpacity
@@ -234,9 +179,9 @@ export default function HomeScreen() {
       >
         {/* Index / playing indicator */}
         <View style={styles.trackIndexWrap}>
-          {buffering && isPlaying ? (
+          {isPlaying && status.isBuffering ? (
             <ActivityIndicator color="#7c3aed" size="small" />
-          ) : isPlaying ? (
+          ) : isThisPlaying ? (
             <Text style={styles.trackPlaying}>♪</Text>
           ) : (
             <Text style={styles.trackIndex}>{index + 1}</Text>
@@ -260,23 +205,29 @@ export default function HomeScreen() {
               {item.musicinfo.tags.genres[0]}
             </Text>
           )}
-          {/* Mini progress bar inside active track row */}
-          {isPlaying && durationMs > 0 && (
+
+          {/* Mini progress bar */}
+          {isPlaying && status.duration > 0 && (
             <View style={styles.miniProgressBg}>
-              <View style={[styles.miniProgressFill, { width: `${progress * 100}%` as any }]} />
+              <View
+                style={[
+                  styles.miniProgressFill,
+                  { width: `${progress * 100}%` as any },
+                ]}
+              />
             </View>
           )}
         </View>
 
         <View style={styles.trackRight}>
           <Text style={styles.trackDuration}>
-            {isPlaying && positionMs > 0
-              ? formatDuration(Math.floor(positionMs / 1000))
+            {isPlaying && status.currentTime > 0
+              ? formatDuration(status.currentTime)
               : formatDuration(item.duration)}
           </Text>
           <View style={[styles.playCircle, isPlaying && styles.playCircleActive]}>
             <Text style={styles.playCircleIcon}>
-              {isPlaying ? "⏸" : "▶"}
+              {isThisPlaying ? "⏸" : "▶"}
             </Text>
           </View>
         </View>
@@ -307,14 +258,13 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={() => { setRefreshing(true); fetchTracks(); }}
             tintColor="#7c3aed"
             colors={["#7c3aed"]}
           />
         }
         ListHeaderComponent={
           <>
-            {/* Header */}
             <View style={styles.header}>
               <View>
                 <Text style={styles.greeting}>Good evening 🎵</Text>
@@ -406,7 +356,6 @@ const styles = StyleSheet.create({
   },
   avatarEmoji: { fontSize: 22 },
 
-  /* Featured */
   featuredCard: {
     marginHorizontal: 20,
     borderRadius: 20,
@@ -439,12 +388,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
   },
-  featuredBadgeText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
+  featuredBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
   featuredTitle: {
     fontSize: 20,
     fontWeight: "800",
@@ -494,7 +438,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 12,
-    alignSelf: "flex-start",
     minWidth: 100,
     alignItems: "center",
     shadowColor: "#7c3aed",
@@ -515,7 +458,6 @@ const styles = StyleSheet.create({
   },
   stopBtnText: { fontSize: 16 },
 
-  /* Section */
   sectionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -526,7 +468,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: "700", color: "#e2e2ff" },
   sectionCount: { fontSize: 13, color: "#5a5a8a" },
 
-  /* Track row */
   trackRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -537,11 +478,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   trackRowActive: { backgroundColor: "#1a1a38" },
-  trackIndexWrap: {
-    width: 28,
-    alignItems: "center",
-    marginRight: 10,
-  },
+  trackIndexWrap: { width: 28, alignItems: "center", marginRight: 10 },
   trackIndex: { color: "#4a4a7a", fontSize: 13, fontWeight: "600" },
   trackPlaying: { color: "#7c3aed", fontSize: 18, fontWeight: "800" },
   trackArt: {
@@ -556,7 +493,6 @@ const styles = StyleSheet.create({
   trackNameActive: { color: "#a78bfa" },
   trackArtist: { fontSize: 12, color: "#6868a0", marginBottom: 2 },
   trackGenre: { fontSize: 10, color: "#4a4a70", textTransform: "capitalize" },
-
   miniProgressBg: {
     height: 2,
     backgroundColor: "#2a2a50",
@@ -569,7 +505,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#7c3aed",
     borderRadius: 1,
   },
-
   trackRight: { alignItems: "flex-end", gap: 6 },
   trackDuration: { color: "#5a5a8a", fontSize: 11 },
   playCircle: {
