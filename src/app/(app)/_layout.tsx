@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Text } from "react-native";
 import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import MiniPlayer from "@/components/MiniPlayer";
 
 export default function AppLayout() {
@@ -24,14 +25,21 @@ export default function AppLayout() {
           name="home"
           options={{
             title: "Home",
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏠</Text>,
+            tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="explore"
           options={{
-            title: "Explore",
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🔍</Text>,
+            title: "Search",
+            tabBarIcon: ({ color }) => <Ionicons name="search" size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="library"
+          options={{
+            title: "Your Library",
+            tabBarIcon: ({ color }) => <Ionicons name="library" size={24} color={color} />,
           }}
         />
         <Tabs.Screen
@@ -46,9 +54,32 @@ export default function AppLayout() {
             href: null, // Hide from tab bar
           }}
         />
+        <Tabs.Screen
+          name="likedSongs"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="PlaylistDetails"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="Friends"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="FriendProfile"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="joinPlaylist"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="updateProfile"
+          options={{ href: null }}
+        />
       </Tabs>
 
-      {/* Persistent MiniPlayer shown on every screen in this group */}
       <MiniPlayer />
     </View>
   );

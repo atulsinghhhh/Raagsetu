@@ -37,7 +37,7 @@ export default function QueueScreen() {
 
       <FlatList
         data={queue}
-        keyExtractor={(item, i) => `${item.videoId}-${i}`}
+        keyExtractor={(item, i) => `${item.video_id}-${i}`}
         renderItem={({ item, index }) => (
           <SongCard
             song={item}

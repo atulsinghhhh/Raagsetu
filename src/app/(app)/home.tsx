@@ -1,23 +1,15 @@
 import { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  Image, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  Alert, 
-  RefreshControl,
-  ScrollView 
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { setAudioModeAsync } from "expo-audio";
 import { player as globalPlayer } from "@/lib/audioManager";
 import { usePlayer } from "@/hook/usePlayer";
 import { useQueueStore } from "@/store/queueStore";
+import { useLibraryStore } from "@/store/useLibraryStore";
 import { Song } from "@/types/song";
 import { searchSongs } from "@/lib/api";
+import { router } from "expo-router";
+import { useAuth } from "@/context/AuthProvider";
 
 const JAMENDO_CLIENT_ID = "e76dee42";
 
@@ -43,10 +35,12 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const { user } = useAuth();
   const { currentSong, isPlaying, playSong, status } = usePlayer();
   const { setQueue } = useQueueStore();
+  const { recentlyHistory } = useLibraryStore();
 
-  const playingId = currentSong?.videoId || null;
+  const playingId = currentSong?.video_id || null;
 
   // Configure audio session once
   useEffect(() => {
@@ -86,11 +80,11 @@ export default function HomeScreen() {
 
       // 3. Sync queue with whatever we successfully loaded
       const jamendoToSong = jTracks.map((t: Track) => ({
-        videoId: t.id,
+        video_id: t.id,
         title: t.name,
         artist: t.artist_name,
         thumbnail: t.album_image,
-        duration: t.duration,
+        duration_sec: t.duration,
       }));
       
       const fullQueue = [...jamendoToSong, ...yTracks];
@@ -113,11 +107,11 @@ export default function HomeScreen() {
 
   const handlePlayJamendo = (track: Track) => {
     const song: Song = {
-      videoId: track.id,
+      video_id: track.id,
       title: track.name,
       artist: track.artist_name,
       thumbnail: track.album_image,
-      duration: track.duration,
+      duration_sec: track.duration,
     };
 
     if (playingId === track.id) {
@@ -130,7 +124,7 @@ export default function HomeScreen() {
   };
 
   const handlePlayYT = (song: Song, index: number) => {
-    if (playingId === song.videoId) {
+    if (playingId === song.video_id) {
       status.playing ? globalPlayer.pause() : globalPlayer.play();
       return;
     }
@@ -164,10 +158,46 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>Good evening 🎵</Text>
             <Text style={styles.pageTitle}>Raagsetu</Text>
           </View>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarEmoji}>🎹</Text>
-          </View>
+          <TouchableOpacity 
+             style={styles.avatarCircle} 
+             onPress={() => router.push('/updateProfile' as any)}
+             activeOpacity={0.7}
+          >
+            {user?.avatar_url ? (
+               <Image source={{ uri: user.avatar_url }} style={{ width: '100%', height: '100%', borderRadius: 22 }} />
+            ) : (
+               <Text style={styles.avatarEmoji}>🎹</Text>
+            )}
+          </TouchableOpacity>
         </View>
+
+        {/* Recently Played */}
+        {recentlyHistory && recentlyHistory.length > 0 && (
+          <>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Recently Played</Text>
+            </View>
+            <FlatList
+              horizontal
+              data={recentlyHistory}
+              keyExtractor={(item, index) => `${item.video_id}-${index}`}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={styles.ytCard}
+                  onPress={() => playSong(item)}
+                >
+                  <Image source={{ uri: item.thumbnail }} style={styles.ytImage} />
+                  <View style={styles.ytInfo}>
+                    <Text style={styles.ytTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.ytArtist} numberOfLines={1}>{item.artist}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </>
+        )}
 
         {/* YouTube Section */}
         <View style={styles.sectionRow}>
@@ -177,7 +207,7 @@ export default function HomeScreen() {
         <FlatList
           horizontal
           data={ytTracks}
-          keyExtractor={(item) => item.videoId}
+          keyExtractor={(item) => item.video_id}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
           renderItem={({ item, index }) => (

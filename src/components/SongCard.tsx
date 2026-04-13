@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View,Text,Image,TouchableOpacity,StyleSheet,} from "react-native";
 import { Song } from "@/types/song";
 
 interface SongCardProps {
@@ -40,7 +34,7 @@ export default function SongCard({ song, onPress }: SongCardProps) {
         </Text>
       </View>
 
-      <Text style={styles.duration}>{formatDuration(song.duration)}</Text>
+      <Text style={styles.duration}>{formatDuration(song.duration_sec)}</Text>
     </TouchableOpacity>
   );
 }

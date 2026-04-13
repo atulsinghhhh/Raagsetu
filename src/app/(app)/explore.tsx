@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useSearch } from "@/hook/useSearch";
 import { usePlayer } from "@/hook/usePlayer";
-import SongCard from "@/components/SongCard";
+import { SongRow } from "@/components/SongRow";
 import { Song } from "@/types/song";
 
 export default function ExploreScreen() {
@@ -53,9 +53,14 @@ export default function ExploreScreen() {
 
       <FlatList
         data={results}
-        keyExtractor={(item) => item.videoId}
+        keyExtractor={(item) => item.video_id}
         renderItem={({ item }) => (
-          <SongCard song={item} onPress={handleSongPress} />
+          <SongRow 
+            song={item} 
+            showHeart={true} 
+            showMenu={true} 
+            onPress={() => handleSongPress(item)} 
+          />
         )}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}

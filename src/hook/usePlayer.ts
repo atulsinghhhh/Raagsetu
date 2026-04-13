@@ -3,12 +3,28 @@ import { useAudioPlayerStatus } from "expo-audio";
 import { player, playSong as audioPlaySong } from "@/lib/audioManager";
 import { usePlayerStore } from "@/store/playerStore";
 import { useQueueStore } from "@/store/queueStore";
+import { useLibraryStore } from "@/store/useLibraryStore";
+import { supabase } from "@/lib/supabase/client";
 import { Song } from "@/types/song";
+import { updateNowPlaying } from "@/lib/utils/friendsHelpers";
 
-/**
- * Hook that exposes playSong and keeps currentSong / isPlaying in sync
- * via the Zustand stores and expo-audio status.
- */
+export async function saveSongToSupabase(song: Song) {
+  const { error } = await supabase.from('songs').upsert(
+    {
+      video_id: song.video_id,
+      title: song.title,
+      artist: song.artist,
+      thumbnail: song.thumbnail,
+      duration_sec: Math.floor(song.duration_sec || 0)
+    },
+    { onConflict: 'video_id' }
+  );
+  if (error) {
+    console.error("Error saving song:", error);
+  }
+}
+
+
 export function usePlayer() {
   const currentSong = usePlayerStore((s: any) => s.currentSong);
   const setCurrentSong = usePlayerStore((s: any) => s.setCurrentSong);
@@ -20,13 +36,17 @@ export function usePlayer() {
   // Keep isPlaying in sync with expo-audio state
   useEffect(() => {
     setIsPlaying(status.playing);
-  }, [status.playing, setIsPlaying]);
+    
+    // Step 6: update now_playing presence
+    if (status.playing && currentSong) {
+      updateNowPlaying(currentSong).catch(e => console.log('NowPlaying error', e));
+    } else if (!status.playing) {
+      updateNowPlaying(null).catch(e => console.log('NowPlaying error', e));
+    }
+  }, [status.playing, setIsPlaying, currentSong]);
 
   // Handle automatic song change when finished
   useEffect(() => {
-    // Note: Checking for status.playbackState === "finished" or similar
-    // expo-audio status often has a "finished" or "didJustFinish" property
-    // For now we'll check if position >= duration and duration > 0
     if (status.duration > 0 && status.currentTime >= status.duration) {
        handleAutoNext();
     }
@@ -46,6 +66,11 @@ export function usePlayer() {
       setCurrentIndex(index);
     }
     setCurrentSong(song);
+    
+    // Step 2 & Step 11: Save to songs table and update play history
+    await saveSongToSupabase(song);
+    useLibraryStore.getState().addToHistory(song);
+
     await audioPlaySong(song);
   };
 

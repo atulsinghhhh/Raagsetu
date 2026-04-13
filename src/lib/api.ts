@@ -19,20 +19,20 @@ export async function searchSongs(query: string): Promise<Song[]> {
 }
 
 /**
- * Get a direct audio stream URL for a given videoId.
+ * Get a direct audio stream URL for a given video_id.
  */
 export async function getStreamUrl(
-  videoId: string,
+  video_id: string,
   meta?: Partial<Song>
 ): Promise<string> {
   const params = new URLSearchParams();
   if (meta?.title) params.set("title", meta.title);
   if (meta?.artist) params.set("artist", meta.artist);
   if (meta?.thumbnail) params.set("thumbnail", meta.thumbnail);
-  if (meta?.duration) params.set("duration", String(meta.duration));
+  if (meta?.duration_sec) params.set("duration", String(meta.duration_sec));
 
   const res = await fetch(
-    `${API_BASE}/stream/${videoId}?${params.toString()}`
+    `${API_BASE}/stream/${video_id}?${params.toString()}`
   );
   const json = await res.json();
   if (!json.success) throw new Error(json.error ?? "Stream failed");

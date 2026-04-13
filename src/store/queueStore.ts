@@ -12,6 +12,9 @@ interface QueueState {
   setCurrentIndex: (index: number) => void;
   setRepeatMode: (mode: RepeatMode) => void;
   setShuffled: (shuffled: boolean) => void;
+  playQueue: (songs: Song[], startIndex?: number) => void;
+  playNext: (song: Song) => void;
+  addToQueue: (song: Song) => void;
 }
 
 export const useQueueStore = create<QueueState>((set) => ({
@@ -23,4 +26,19 @@ export const useQueueStore = create<QueueState>((set) => ({
   setCurrentIndex: (index: number) => set({ currentIndex: index }),
   setRepeatMode: (mode: RepeatMode) => set({ repeatMode: mode }),
   setShuffled: (shuffled: boolean) => set({ isShuffled: shuffled }),
+
+  playQueue: (songs: Song[], startIndex: number = 0) => {
+    set({
+      queue: songs,
+      currentIndex: startIndex,
+      isShuffled: false,
+      repeatMode: "off"
+    })
+  },
+  playNext: (song: Song) => set((state) => {
+    const newQueue = [...state.queue];
+    newQueue.splice(state.currentIndex + 1, 0, song);
+    return { queue: newQueue };
+  }),
+  addToQueue: (song: Song) => set((state) => ({ queue: [...state.queue, song] }))
 }));

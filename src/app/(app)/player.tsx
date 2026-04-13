@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import { usePlayerStore } from "@/store/playerStore";
 import Controls from "@/components/Controls";
 import ProgressBar from "@/components/ProgressBar";
+import { HeartButton } from "@/components/HeartButton";
 
 export default function PlayerScreen() {
   const currentSong = usePlayerStore((s) => s.currentSong);
@@ -49,12 +50,15 @@ export default function PlayerScreen() {
 
       {/* Song info */}
       <View style={styles.infoWrap}>
-        <Text style={styles.title} numberOfLines={2}>
-          {currentSong.title}
-        </Text>
-        <Text style={styles.artist} numberOfLines={1}>
-          {currentSong.artist}
-        </Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title} numberOfLines={2}>
+            {currentSong.title}
+          </Text>
+          <Text style={styles.artist} numberOfLines={1}>
+            {currentSong.artist}
+          </Text>
+        </View>
+        <HeartButton song={currentSong} size={28} />
       </View>
 
       {/* Progress */}
@@ -112,20 +116,22 @@ const styles = StyleSheet.create({
   infoWrap: {
     paddingHorizontal: 24,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
   title: {
     fontSize: 22,
     fontWeight: "800",
     color: "#e2e2ff",
-    textAlign: "center",
+    textAlign: "left",
     marginBottom: 6,
     letterSpacing: -0.3,
   },
   artist: {
     fontSize: 15,
     color: "#7878a8",
-    textAlign: "center",
+    textAlign: "left",
   },
   emptyWrap: {
     flex: 1,
