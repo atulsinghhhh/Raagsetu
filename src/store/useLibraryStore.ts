@@ -40,7 +40,7 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
             .order('played_at', { ascending: false })
             .limit(20)
 
-         set({
+        set({
             likedIds,
             playlists: (playlists as any[])?.map(p => ({
                 id: p.id,
@@ -105,7 +105,7 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
     },
 
     addToHistory: async (song: Song) => {
-       set(s => ({
+        set(s => ({
             recentlyHistory: [song, ...s.recentlyHistory.filter(h => h.video_id !== song.video_id)].slice(0, 20)
         }));
 

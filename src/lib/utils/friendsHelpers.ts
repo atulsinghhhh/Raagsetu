@@ -1,4 +1,3 @@
-import { useAuth } from "@/context/AuthProvider";
 import { supabase } from "../supabase/client";
 import { Song } from "@/types/song";
 
@@ -59,33 +58,37 @@ export async function acceptInvite(token: string): Promise<'success' | 'expired'
 
 
 export async function updateNowPlaying(song: Song|null) {
-    const {data: {user}} = await supabase.auth.getUser();
-    if(!user) throw new Error("Not loggedIn");
-
-    if(!song){
-        await supabase.from('now_playing')
-            .update({is_playing: false, updated_at: new Date().toISOString()})
-            .eq('user_id',user.id)
-        return;
+    try {
+        const {data: {user}} = await supabase.auth.getUser();
+        if(!user) return;
+    
+        if(!song){
+            await supabase.from('now_playing')
+                .update({is_playing: false, updated_at: new Date().toISOString()})
+                .eq('user_id',user.id)
+            return;
+        }
+    
+        await supabase.from('now_playing').upsert({
+            user_id:    user.id,
+            video_id:   song.video_id,
+            title:      song.title,
+            artist:     song.artist,
+            thumbnail:  song.thumbnail,
+            is_playing: true,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+    
+        // TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, (event) => {
+        // const song = event.track?.extras?.song ?? null
+        // updateNowPlaying(song)  // non-blocking, fire and forget
+        // })
+    
+        // TrackPlayer.addEventListener(Event.PlaybackState, (event) => {
+        // if (event.state === State.Paused || event.state === State.Stopped) {
+        // updateNowPlaying(null)
+    } catch (error) {
+        console.warn('updateNowPlaying failed:', error)
     }
-
-    await supabase.from('now_playing').upsert({
-        user_id:    user.id,
-        video_id:   song.video_id,
-        title:      song.title,
-        artist:     song.artist,
-        thumbnail:  song.thumbnail,
-        is_playing: true,
-        updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' })
-
-    // TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, (event) => {
-    // const song = event.track?.extras?.song ?? null
-    // updateNowPlaying(song)  // non-blocking, fire and forget
-    // })
-
-    // TrackPlayer.addEventListener(Event.PlaybackState, (event) => {
-    // if (event.state === State.Paused || event.state === State.Stopped) {
-    updateNowPlaying(null)
 
 }

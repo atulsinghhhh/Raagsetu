@@ -1,4 +1,3 @@
-import { useAuth } from "@/context/AuthProvider";
 import { supabase } from "../supabase/client";
 import { useLibraryStore } from "@/store/useLibraryStore";
 import { Share } from "react-native";
@@ -15,7 +14,7 @@ export async function sharePlaylist(playlistId: string): Promise<string> {
 
     const link=`${APP}://playlist?code=${code}`;
     await Share.share({
-        message: `Join my playlist on [APP]: ${link}\n\nOr enter code: ${code}`
+        message: `Join my playlist on ${APP}: ${link}\n\nOr enter code: ${code}`
     })
 
     return code
