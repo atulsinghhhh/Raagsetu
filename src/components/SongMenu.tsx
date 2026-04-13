@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import {View, Text, Image, TouchableOpacity,StyleSheet, Modal, Animated, Dimensions, Clipboard} from 'react-native'
+import {View, Text, Image, TouchableOpacity,StyleSheet, Modal, Animated, Clipboard} from 'react-native'
 import { Song } from '@/types/song'
 import { useQueueStore } from '@/store/queueStore'
 import { useLibraryStore } from '@/store/useLibraryStore'
@@ -26,7 +26,7 @@ export function SongMenu({ song, onClose, onRemove }: Props) {
       tension: 65,
       friction: 11,
     }).start()
-  }, [])
+  }, [slideY])
 
   const close = () => {
     Animated.timing(slideY, {
@@ -130,8 +130,6 @@ export function SongMenu({ song, onClose, onRemove }: Props) {
     </Modal>
   )
 }
-
-const { height } = Dimensions.get('window')
 
 const styles = StyleSheet.create({
   backdrop: {

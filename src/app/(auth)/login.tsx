@@ -151,7 +151,7 @@ function LoginScreen() {
 
             {/* Sign up link */}
             <View style={styles.signupRow}>
-              <Text style={styles.signupPrompt}>Don't have an account? </Text>
+              <Text style={styles.signupPrompt}>Don&apos;t have an account? </Text>
               <Link href="/(auth)/signup" asChild>
                 <TouchableOpacity>
                   <Text style={styles.signupLink}>Sign Up</Text>

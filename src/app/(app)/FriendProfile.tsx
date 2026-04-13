@@ -1,10 +1,9 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, FlatList, ActivityIndicator, Image } from "react-native";
 import { supabase } from "@/lib/supabase/client";
 import { SongRow } from "@/components/SongRow";
 import { Song, Playlist } from "@/types/song";
-import { player as globalPlayer } from "@/lib/audioManager";
 
 export default function FriendProfileScreen() {
     const { friendId } = useLocalSearchParams();

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { setAudioModeAsync } from "expo-audio";
 import { player as globalPlayer } from "@/lib/audioManager";
@@ -36,7 +36,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const { user } = useAuth();
-  const { currentSong, isPlaying, playSong, status } = usePlayer();
+  const { currentSong, playSong, status } = usePlayer();
   const { setQueue } = useQueueStore();
   const { recentlyHistory } = useLibraryStore();
 
@@ -103,6 +103,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePlayJamendo = (track: Track) => {
@@ -115,7 +116,8 @@ export default function HomeScreen() {
     };
 
     if (playingId === track.id) {
-      status.playing ? globalPlayer.pause() : globalPlayer.play();
+      if (status.playing) globalPlayer.pause(); 
+      else globalPlayer.play();
       return;
     }
 
@@ -125,7 +127,8 @@ export default function HomeScreen() {
 
   const handlePlayYT = (song: Song, index: number) => {
     if (playingId === song.video_id) {
-      status.playing ? globalPlayer.pause() : globalPlayer.play();
+      if (status.playing) globalPlayer.pause();
+      else globalPlayer.play();
       return;
     }
     // Set index relative to YT list (or total queue)

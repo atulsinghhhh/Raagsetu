@@ -40,7 +40,7 @@ export default function UpdateProfileScreen() {
                 const fileExt = ext.includes('?') ? ext.split('?')[0] : ext;
                 const fileName = `${user?.id || 'user'}_${Date.now()}.${fileExt}`;
                 
-                const { data, error } = await supabase.storage.from('avatars').upload(fileName, blob, {
+                const { error } = await supabase.storage.from('avatars').upload(fileName, blob, {
                     contentType: `image/${fileExt}`
                 });
                 

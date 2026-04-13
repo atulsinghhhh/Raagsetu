@@ -12,7 +12,7 @@ interface User {
     avatar_url?: string;
 }
 
-interface AuthContext {
+interface AuthContextType {
     user: User | null;
     signUp: (email: string, password: string) => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
@@ -20,13 +20,14 @@ interface AuthContext {
     updateUserProfile: (userData: Partial<User>) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContext | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         getSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const getSession = async () => {

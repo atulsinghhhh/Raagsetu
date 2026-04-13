@@ -55,7 +55,7 @@ export function CreatePlaylistSheet({ onClose }: { onClose?: () => void } = {}){
                 if (onClose) onClose();
             }
 
-        } catch (error) {
+        } catch {
             Alert.alert("Error", "Failed to create playlist. Please try again.");
             return;
         } finally{

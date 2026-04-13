@@ -2,7 +2,7 @@ import { useFriendsRealtime } from "@/hook/useFriendsRealtime";
 import { supabase } from "@/lib/supabase/client";
 import { useFriendsStore } from "@/store/useFriendsStore";
 import { useEffect } from "react";
-import { Alert, View,Text,TouchableOpacity, Animated, FlatList, Share, Image } from "react-native";
+import { Alert, View,Text,TouchableOpacity, FlatList, Share, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { generateInviteLink } from "@/lib/utils/friendsHelpers";
 
@@ -14,6 +14,7 @@ export default function FriendsScreen({navigation}: any) {
 
     useEffect(()=>{
         loadFriends();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
     const unfriend = async (friendship_id: string,friendId: string)=>  {

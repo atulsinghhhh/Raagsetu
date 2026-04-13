@@ -41,7 +41,7 @@ function RootNav() {
           else if (res === 'already_friends') Alert.alert('Info', 'You are already friends.');
           else if (res === 'self') Alert.alert('Oops', 'You cannot accept your own invite.');
           else Alert.alert('Error', 'Invite link expired or invalid.');
-        } catch (e) {
+        } catch {
           Alert.alert('Error', 'Failed to verify invite link.');
         }
       }

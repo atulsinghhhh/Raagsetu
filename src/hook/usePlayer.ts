@@ -50,6 +50,7 @@ export function usePlayer() {
     if (status.duration > 0 && status.currentTime >= status.duration) {
        handleAutoNext();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status.currentTime, status.duration]);
 
   const handleAutoNext = async () => {

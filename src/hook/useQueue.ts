@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useQueueStore, type RepeatMode as StoreRepeatMode } from "@/store/queueStore";
+import { useQueueStore } from "@/store/queueStore";
 
 /**
  * Hook for queue management: shuffle, repeat modes.

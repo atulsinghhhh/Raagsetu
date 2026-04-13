@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { useQueueStore } from "@/store/queueStore";
 import { useLibraryStore } from "@/store/useLibraryStore";
-import { Playlist, Song } from "@/types/song";
+import { Song } from "@/types/song";
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { usePlayer } from "@/hook/usePlayer";
@@ -14,7 +14,6 @@ import { sharePlaylist } from "@/lib/utils/playlistHelpers";
 export function PlaylistDetails({route}: any){
     const { playlistId } = route.params;
     const [songs,setSongs] = useState<Song[]>([]);
-    const [playlist,setPlaylist] = useState<Playlist|null>(null);
     const {playQueue} = useQueueStore();
     const {removePlaylist} = useLibraryStore();
     const { currentSong } = usePlayer();
@@ -23,6 +22,7 @@ export function PlaylistDetails({route}: any){
 
     useEffect(()=>{
         loadPlaylist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     },[playlistId])
 
     const  loadPlaylist = async() =>{

@@ -34,7 +34,7 @@ export function LikedSongsScreen(){
                 })
         }
         fetchLikedSongs();
-    },[likedIds.size])
+    },[likedIds])
 
     return (
         <View style={styles.container}>

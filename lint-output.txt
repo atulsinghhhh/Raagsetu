@@ -1,0 +1,73 @@
+
+> raagsetu@1.0.0 lint
+> expo lint
+
+env: load .env
+env: export EXPO_PUBLIC_APP_SCHEME EXPO_PUBLIC_SUPABASE_KEY EXPO_PUBLIC_SUPABASE_URL
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\FriendProfile.tsx
+  3:51  warning  'TouchableOpacity' is defined but never used  @typescript-eslint/no-unused-vars
+  3:69  warning  'StyleSheet' is defined but never used        @typescript-eslint/no-unused-vars
+  7:20  warning  'globalPlayer' is defined but never used      @typescript-eslint/no-unused-vars
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\Friends.tsx
+   5:45  warning  'Animated' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  17:7   warning  React Hook useEffect has a missing dependency: 'loadFriends'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\PlaylistDetails.tsx
+  17:12  warning  'playlist' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  17:21  warning  'setPlaylist' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+  26:7   warning  React Hook useEffect has a missing dependency: 'loadPlaylist'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\_layout.tsx
+  2:28  warning  'Text' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\home.tsx
+    2:88  warning  'Alert' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   39:24  warning  'isPlaying' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  106:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  118:7   warning  Expected an assignment or function call and instead saw an expression                                         no-unused-expressions
+  128:7   warning  Expected an assignment or function call and instead saw an expression                                         no-unused-expressions
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\library.tsx
+  3:34  warning  'C:\Users\Atul_Rathore\SaaS\Raagsetu\node_modules\react-native\index.js' imported multiple times  import/no-duplicates
+  5:64  warning  'C:\Users\Atul_Rathore\SaaS\Raagsetu\node_modules\react-native\index.js' imported multiple times  import/no-duplicates
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\likedSongs.tsx
+  37:7  warning  React Hook useEffect has a missing dependency: 'likedIds'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(app)\updateProfile.tsx
+  43:25  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(auth)\login.tsx
+  154:52  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\(auth)\signup.tsx
+  177:61  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\app\_layout.tsx
+  44:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\components\CreatePlaylistSheet.tsx
+  58:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\components\SongMenu.tsx
+   29:6  warning  React Hook useEffect has a missing dependency: 'slideY'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  134:9  warning  'height' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\context\AuthProvider.tsx
+  23:7  warning  'AuthContext' is already defined                                                                               @typescript-eslint/no-redeclare
+  30:8  warning  React Hook useEffect has a missing dependency: 'getSession'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\hook\useFriendsRealtime.ts
+  47:7  warning  React Hook useEffect has missing dependencies: 'friends' and 'patchNowPlaying'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\hook\usePlayer.ts
+  53:6  warning  React Hook useEffect has a missing dependency: 'handleAutoNext'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Atul_Rathore\SaaS\Raagsetu\src\hook\useQueue.ts
+  2:44  warning  'StoreRepeatMode' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 29 problems (2 errors, 27 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

@@ -174,7 +174,7 @@ function SignupScreen() {
                 </TouchableOpacity>
               </View>
               {confirmPassword.length > 0 && password !== confirmPassword && (
-                <Text style={styles.errorText}>Passwords don't match</Text>
+                <Text style={styles.errorText}>Passwords don&apos;t match</Text>
               )}
             </View>
 
