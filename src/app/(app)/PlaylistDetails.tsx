@@ -11,7 +11,7 @@ import { sharePlaylist } from "@/lib/utils/playlistHelpers";
 
 
 
-export function PlaylistDetails({route}: any){
+export default function PlaylistDetails({route}: any){
     const { playlistId } = route.params;
     const [songs,setSongs] = useState<Song[]>([]);
     const {playQueue} = useQueueStore();

@@ -14,7 +14,7 @@ export async function setupAudio() {
 
 export async function playSong(song: Song) {
   try {
-    const url = await getStreamUrl(song.video_id, song);
+    const url = song.audio_url || await getStreamUrl(song.video_id, song);
     
     player.replace(url);
     

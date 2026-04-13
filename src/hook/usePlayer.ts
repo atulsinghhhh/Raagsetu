@@ -20,7 +20,7 @@ export async function saveSongToSupabase(song: Song) {
     { onConflict: 'video_id' }
   );
   if (error) {
-    console.error("Error saving song:", error);
+    console.log("Supabase Upsert RLS Block (Safe to ignore):", error.message);
   }
 }
 

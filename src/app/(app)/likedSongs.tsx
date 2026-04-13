@@ -8,7 +8,7 @@ import { SongRow } from "@/components/SongRow";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 
-export function LikedSongsScreen(){
+export default function LikedSongsScreen(){
     const { likedIds } = useLibraryStore();
     const { playQueue } = useQueueStore();
     const { currentSong } = usePlayer();

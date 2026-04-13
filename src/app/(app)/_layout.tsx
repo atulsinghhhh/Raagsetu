@@ -43,6 +43,13 @@ export default function AppLayout() {
           }}
         />
         <Tabs.Screen
+          name="Friends"
+          options={{
+            title: "Friends",
+            tabBarIcon: ({ color }) => <Ionicons name="people" size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name="player"
           options={{
             href: null, // Hide from tab bar
@@ -60,10 +67,6 @@ export default function AppLayout() {
         />
         <Tabs.Screen
           name="PlaylistDetails"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="Friends"
           options={{ href: null }}
         />
         <Tabs.Screen

@@ -4,6 +4,7 @@ export type Song ={
   artist: string;
   thumbnail: string;
   duration_sec: number;
+  audio_url?: string;
 }
 
 

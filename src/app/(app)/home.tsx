@@ -85,6 +85,7 @@ export default function HomeScreen() {
         artist: t.artist_name,
         thumbnail: t.album_image,
         duration_sec: t.duration,
+        audio_url: t.audio,
       }));
       
       const fullQueue = [...jamendoToSong, ...yTracks];
@@ -113,6 +114,7 @@ export default function HomeScreen() {
       artist: track.artist_name,
       thumbnail: track.album_image,
       duration_sec: track.duration,
+      audio_url: track.audio,
     };
 
     if (playingId === track.id) {

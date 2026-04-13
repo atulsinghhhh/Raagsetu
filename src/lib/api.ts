@@ -15,7 +15,13 @@ export async function searchSongs(query: string): Promise<Song[]> {
   );
   const json = await res.json();
   if (!json.success) throw new Error(json.error ?? "Search failed");
-  return json.data as Song[];
+  return json.data.map((item: any) => ({
+    video_id: item.videoId,
+    title: item.title,
+    artist: item.artist,
+    thumbnail: item.thumbnail,
+    duration_sec: item.duration,
+  }));
 }
 
 /**
