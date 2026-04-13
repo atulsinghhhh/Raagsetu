@@ -59,7 +59,7 @@ export default function QueueScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#0a0a14",
+    backgroundColor: "#0e0e0e",
   },
   header: {
     flexDirection: "row",
@@ -70,12 +70,12 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     fontSize: 24,
-    color: "#d0d0f0",
+    color: "#ffffff",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#e2e2ff",
+    color: "#ffffff",
   },
   shuffleBtn: {
     fontSize: 22,
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     paddingTop: 48,
   },
   emptyText: {
-    color: "#5a5a8a",
+    color: "#adaaaa",
     fontSize: 15,
   },
 });

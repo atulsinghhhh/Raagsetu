@@ -30,7 +30,7 @@ export default function JoinPlaylistScreen({ navigation }: any) {
     return (
         <View style={{ flex:1, padding:24 }}>
             <Text style={{ fontSize:22, fontWeight:'500', marginBottom:8 }}>Join a playlist</Text>
-            <Text style={{ color:'#888', marginBottom:24 }}>Ask your friend for the 6-character code</Text>
+            <Text style={{ color:'#adaaaa', marginBottom:24 }}>Ask your friend for the 6-character code</Text>
             <TextInput
                 placeholder="Enter code e.g. AB12CD"
                 value={code}

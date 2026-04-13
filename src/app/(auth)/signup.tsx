@@ -239,7 +239,7 @@ function SignupScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0a0a14",
+    backgroundColor: "#0e0e0e",
   },
   flex: { flex: 1 },
 
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     width: 240,
     height: 240,
     borderRadius: 120,
-    backgroundColor: "#7c3aed",
+    backgroundColor: "#c799ff",
     opacity: 0.18,
   },
 
@@ -279,18 +279,18 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#1e1b3a",
+    backgroundColor: "#20201f",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
     borderWidth: 1,
-    borderColor: "#7c3aed55",
+    borderColor: "#c799ff55",
   },
   logoEmoji: { fontSize: 22 },
   brand: {
     fontSize: 26,
     fontWeight: "800",
-    color: "#e2e2ff",
+    color: "#ffffff",
     letterSpacing: 0.5,
   },
 
@@ -303,13 +303,13 @@ const styles = StyleSheet.create({
   },
   subheadline: {
     fontSize: 15,
-    color: "#7878a8",
+    color: "#adaaaa",
     marginBottom: 32,
     lineHeight: 22,
   },
 
   card: {
-    backgroundColor: "#13132a",
+    backgroundColor: "#20201f",
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#a0a0c8",
+    color: "#adaaaa",
     marginBottom: 8,
     letterSpacing: 0.3,
   },
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#0d0d22",
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: "#2a2a4a",
     paddingHorizontal: 14,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: "#e2e2ff",
+    color: "#ffffff",
     paddingVertical: 0,
   },
   eyeButton: { padding: 4 },
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   strengthBarBg: {
     flex: 1,
     height: 4,
-    backgroundColor: "#1e1e3a",
+    backgroundColor: "#20201f",
     borderRadius: 2,
     overflow: "hidden",
   },
@@ -399,17 +399,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   perkText: {
-    color: "#6868a0",
+    color: "#adaaaa",
     fontSize: 13,
   },
 
   signUpBtn: {
-    backgroundColor: "#7c3aed",
-    borderRadius: 14,
+    backgroundColor: "#c799ff",
+    borderRadius: 12,
     height: 54,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#7c3aed",
+    shadowColor: "#c799ff",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.45,
     shadowRadius: 16,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   dividerLine: { flex: 1, height: 1, backgroundColor: "#2a2a4a" },
   dividerText: {
-    color: "#4a4a6a",
+    color: "#adaaaa",
     fontSize: 13,
     marginHorizontal: 12,
     fontWeight: "600",
@@ -441,21 +441,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  loginPrompt: { color: "#7878a8", fontSize: 14 },
+  loginPrompt: { color: "#adaaaa", fontSize: 14 },
   loginLink: {
-    color: "#7c3aed",
+    color: "#c799ff",
     fontSize: 14,
     fontWeight: "700",
   },
 
   footer: {
     textAlign: "center",
-    color: "#4a4a6a",
+    color: "#adaaaa",
     fontSize: 12,
     marginTop: 24,
     lineHeight: 18,
   },
-  footerLink: { color: "#7c3aed", fontWeight: "600" },
+  footerLink: { color: "#c799ff", fontWeight: "600" },
 });
 
 export default SignupScreen;

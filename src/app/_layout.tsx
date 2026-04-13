@@ -57,8 +57,8 @@ function RootNav() {
 
   if (!playerReady) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0a0a14" }}>
-        <ActivityIndicator color="#7c3aed" size="large" />
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0e0e0e" }}>
+        <ActivityIndicator color="#c799ff" size="large" />
       </View>
     );
   }

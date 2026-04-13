@@ -51,7 +51,7 @@ export function SongRow({
         {showIndex !== undefined ? (
           <View style={styles.indexBox}>
             {isPlaying
-              ? <ActivityIndicator size="small" color="#1D9E75" />
+              ? <ActivityIndicator size="small" color="#4af8e3" />
               : <Text style={styles.indexText}>{showIndex}</Text>
             }
           </View>
@@ -105,53 +105,54 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 14,
   },
   rowActive: {
-    backgroundColor: 'rgba(29,158,117,0.06)',
+    backgroundColor: '#131313',
   },
   thumb: {
-    width: 48,
-    height: 48,
-    borderRadius: 6,
-    backgroundColor: '#eee',
+    width: 52,
+    height: 52,
+    borderRadius: 10,
+    backgroundColor: '#000000',
   },
   indexBox: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
   },
   indexText: {
     fontSize: 15,
-    color: '#888',
+    color: '#adaaaa',
+    fontWeight: '600',
   },
   info: {
     flex: 1,
-    gap: 3,
+    gap: 4,
   },
   title: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1a1a1a',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   titleActive: {
-    color: '#1D9E75',
+    color: '#c799ff',
   },
   artist: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 13,
+    color: '#adaaaa',
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 16,
   },
   dots: {
     fontSize: 18,
-    color: '#aaa',
+    color: '#adaaaa',
     letterSpacing: 1,
   },
 })

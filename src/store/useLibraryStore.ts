@@ -56,20 +56,31 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
     },
 
     likeSong: async (song: Song) => {
-        set(s => ({likedIds: new Set([...s.likedIds, song.video_id])}))
+        set(s => ({ likedIds: new Set([...s.likedIds, song.video_id]) }))
 
-        const { data: { user }} = await supabase.auth.getUser();
-        const { data: songRow } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Upsert song into 'songs' table first
+        const { data: songData, error: songError } = await supabase
             .from('songs')
+            .upsert({
+                video_id: song.video_id,
+                title: song.title,
+                artist: song.artist,
+                thumbnail: song.thumbnail,
+                duration_sec: song.duration_sec
+            }, { onConflict: 'video_id' })
             .select('id')
-            .eq('video_id', song.video_id)
             .single();
 
-        if(!songRow) return;
+        if (songError || !songData) {
+            console.error("Error upserting song:", songError);
+            return;
+        }
 
         await supabase
             .from('liked_songs')
-            .insert({ user_id: user?.id, song_id: songRow.id });
+            .insert({ user_id: user?.id, song_id: songData.id });
     },
 
     unlikeSong: async (video_id: string) => {
@@ -109,17 +120,25 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
             recentlyHistory: [song, ...s.recentlyHistory.filter(h => h.video_id !== song.video_id)].slice(0, 20)
         }));
 
-        const { data: { user }} = await supabase.auth.getUser();
-        const { data: songRow } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Upsert song into 'songs' table first
+        const { data: songData } = await supabase
             .from('songs')
+            .upsert({
+                video_id: song.video_id,
+                title: song.title,
+                artist: song.artist,
+                thumbnail: song.thumbnail,
+                duration_sec: song.duration_sec
+            }, { onConflict: 'video_id' })
             .select('id')
-            .eq('video_id', song.video_id)
             .single();
 
-        if(!songRow) return;
+        if (!songData) return;
 
         await supabase
             .from('play_history')
-            .insert({ user_id: user?.id, song_id: songRow.id });
+            .insert({ user_id: user?.id, song_id: songData.id });
     }
 }));

@@ -18,7 +18,9 @@ export default function ProgressBar() {
   return (
     <View style={styles.wrapper}>
       <View style={styles.barOuter}>
-        <View style={[styles.barInner, { width: `${pct}%` }]} />
+        <View style={[styles.barInner, { width: `${pct}%` }]}>
+          <View style={styles.thumb} />
+        </View>
       </View>
 
       <View style={styles.times}>
@@ -36,14 +38,29 @@ const styles = StyleSheet.create({
   },
   barOuter: {
     height: 4,
-    backgroundColor: "#2a2a50",
+    backgroundColor: "rgba(118, 117, 117, 0.15)",
     borderRadius: 2,
     overflow: "hidden",
   },
   barInner: {
     height: "100%",
-    backgroundColor: "#7c3aed",
+    backgroundColor: "#c799ff",
     borderRadius: 2,
+    position: "relative",
+  },
+  thumb: {
+    position: "absolute",
+    right: -4,
+    top: -2.5,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: "#4af8e3",
+    shadowColor: "#4af8e3",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
   },
   times: {
     flexDirection: "row",
@@ -52,7 +69,7 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 11,
-    color: "#6868a0",
+    color: "#adaaaa",
     fontVariant: ["tabular-nums"],
   },
 });

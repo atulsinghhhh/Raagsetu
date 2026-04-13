@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: "#1a1a30",
+    backgroundColor: '#000000',
     marginRight: 12,
   },
   info: {
@@ -64,15 +64,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#d0d0f0",
+    color: "#ffffff",
     marginBottom: 3,
   },
   artist: {
     fontSize: 12,
-    color: "#6868a0",
+    color: "#adaaaa",
   },
   duration: {
     fontSize: 11,
-    color: "#5a5a8a",
+    color: "#adaaaa",
   },
 });

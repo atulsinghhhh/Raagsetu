@@ -11,14 +11,13 @@ export default function AppLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: "#141428",
-            borderTopWidth: 1,
-            borderTopColor: "#1e1e3a",
+            backgroundColor: '#000000',
+            borderTopWidth: 0,
             height: 60,
             paddingBottom: 8,
           },
-          tabBarActiveTintColor: "#7c3aed",
-          tabBarInactiveTintColor: "#5a5a8a",
+          tabBarActiveTintColor: "#c799ff",
+          tabBarInactiveTintColor: "#adaaaa",
         }}
       >
         <Tabs.Screen
@@ -91,6 +90,6 @@ export default function AppLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a14",
+    backgroundColor: "#0e0e0e",
   },
 });

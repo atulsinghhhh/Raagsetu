@@ -1,10 +1,11 @@
-import { useLibraryStore } from "@/store/useLibraryStore";
-import { useState } from "react";
-import  * as ImagePicker  from "expo-image-picker";
-import { supabase } from "@/lib/supabase/client";
+import React, { useState } from "react";
 import { Alert, StyleSheet, TextInput, Text, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
-
+import * as ImagePicker from "expo-image-picker";
+import { supabase } from "@/lib/supabase/client";
+import { useLibraryStore } from "@/store/useLibraryStore";
+import * as FileSystem from 'expo-file-system/legacy';
+import { decode } from 'base-64';
 
 export function CreatePlaylistSheet({ onClose }: { onClose?: () => void } = {}){
 
@@ -15,7 +16,7 @@ export function CreatePlaylistSheet({ onClose }: { onClose?: () => void } = {}){
 
     const pickCover = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             quality: 0.7,
             allowsEditing: true,
             aspect: [1, 1],
@@ -27,7 +28,10 @@ export function CreatePlaylistSheet({ onClose }: { onClose?: () => void } = {}){
     }
 
     const create = async ()=> {
-        if(name.trim()) return;
+        if(!name.trim()) {
+            Alert.alert("Input Required", "Please enter a playlist name");
+            return;
+        }
         setLoading(true);
 
         try {
@@ -35,29 +39,49 @@ export function CreatePlaylistSheet({ onClose }: { onClose?: () => void } = {}){
 
             let cover_url = null;
             if(coverUri) {
-                const ext=coverUri.split('.').pop();
-                const path = `playlist_covers/${user?.id}_${Date.now()}.${ext}`;
-                const blob = await fetch(coverUri).then(res=>res.blob());
+                const ext = coverUri.split('.').pop();
+                const path = `${user?.id}_${Date.now()}.${ext}`;
+                
+                // Android compatible blob read
+                const base64 = await FileSystem.readAsStringAsync(coverUri, { 
+                    encoding: 'base64' 
+                });
+                const binaryStr = decode(base64);
+                const bytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) {
+                    bytes[i] = binaryStr.charCodeAt(i);
+                }
 
-                await supabase.storage.from('playlist-covers').upload(path,blob)
+                const { error: uploadError } = await supabase.storage
+                    .from('playlist-covers')
+                    .upload(path, bytes.buffer, {
+                        contentType: `image/${ext}`,
+                        upsert: true
+                    });
+                
+                if (uploadError) throw uploadError;
+
                 const {data} = supabase.storage.from('playlist-covers').getPublicUrl(path);
                 cover_url = data.publicUrl;
             }
 
-            const {data: playlist} = await supabase.from('playlists').insert({
+            const {data: playlist, error: insertError} = await supabase.from('playlists').insert({
                 owner_id: user?.id,
                 name: name.trim(),
                 cover_url
                 }).select().single();
 
+            if (insertError) throw insertError;
+
             if(playlist){
                 addPlaylist(playlist);
                 if (onClose) onClose();
+                Alert.alert("Success", "Playlist created!");
             }
 
-        } catch {
-            Alert.alert("Error", "Failed to create playlist. Please try again.");
-            return;
+        } catch (err: any) {
+            console.error("Create playlist error:", err);
+            Alert.alert("Error", err.message || "Failed to create playlist.");
         } finally{
             setLoading(false);
         }

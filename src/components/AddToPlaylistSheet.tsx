@@ -65,7 +65,7 @@ export function AddToPlaylistSheet({ song, onClose }: { song: Song; onClose: () 
                             ? <ActivityIndicator />
                             : songInPlaylists.has(pl.id)
                                 ? <Ionicons name="checkmark-circle" color="#1D9E75" size={24} />
-                                : <Ionicons name="add-circle-outline" color="#888" size={24} />
+                                : <Ionicons name="add-circle-outline" color="#adaaaa" size={24} />
                         }
                     </TouchableOpacity>
                 )}

@@ -64,7 +64,7 @@ export default function FriendProfileScreen() {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, backgroundColor: '#0a0a14', justifyContent: 'center' }}>
+            <View style={{ flex: 1, backgroundColor: '#0e0e0e', justifyContent: 'center' }}>
                 <ActivityIndicator color="#1D9E75" />
             </View>
         );
@@ -72,7 +72,7 @@ export default function FriendProfileScreen() {
 
     return (
         <FlatList
-            style={{ flex: 1, backgroundColor: '#0a0a14' }}
+            style={{ flex: 1, backgroundColor: '#0e0e0e' }}
             ListHeaderComponent={
                 <View style={{ padding: 20, alignItems: 'center' }}>
                     <Image 
@@ -94,7 +94,7 @@ export default function FriendProfileScreen() {
                 if (item.owner_id === friendId) {
                     // This is a playlist
                     return (
-                        <View style={{ flexDirection: 'row', padding: 16, backgroundColor: '#141428', marginHorizontal: 16, marginVertical: 4, borderRadius: 8 }}>
+                        <View style={{ flexDirection: 'row', padding: 16, backgroundColor: '#000000', marginHorizontal: 16, marginVertical: 4, borderRadius: 8 }}>
                             <View style={{ flex: 1 }}>
                                 <Text style={{ color: '#fff', fontSize: 16, fontWeight: '500' }}>{item.name}</Text>
                                 <Text style={{ color: '#aaa', fontSize: 14 }}>{item.songs_count || 0} songs</Text>

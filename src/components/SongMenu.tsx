@@ -45,7 +45,7 @@ export function SongMenu({ song, onClose, onRemove }: Props) {
     {
       label: isLiked ? 'Remove from liked' : 'Like song',
       icon: isLiked ? '♥' : '♡',
-      color: isLiked ? '#D4537E' : undefined,
+      color: isLiked ? '#c799ff' : undefined,
       onPress: () => isLiked
         ? unlikeSong(song.video_id)
         : likeSong(song),
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   sheet: {
-    backgroundColor: '#fff',
+    backgroundColor: '#20201f',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 8,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   headerArtist: {
     fontSize: 12,
-    color: '#888',
+    color: '#adaaaa',
     marginTop: 2,
   },
   divider: {

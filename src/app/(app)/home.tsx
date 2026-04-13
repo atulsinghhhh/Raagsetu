@@ -10,6 +10,7 @@ import { Song } from "@/types/song";
 import { searchSongs } from "@/lib/api";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthProvider";
+import { Ionicons } from "@expo/vector-icons";
 
 const JAMENDO_CLIENT_ID = "e76dee42";
 
@@ -137,108 +138,144 @@ export default function HomeScreen() {
     playSong(song, jamendoTracks.length + index);
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning ☀️";
+    if (hour < 18) return "Good afternoon 🌤️";
+    return "Good evening 🌙";
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
-        <ActivityIndicator color="#7c3aed" size="large" />
-        <Text style={styles.loadingText}>Loading music…</Text>
+        <ActivityIndicator color="#c799ff" size="large" />
+        <Text style={styles.loadingText}>Tuning your experience…</Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView 
+      <FlatList
+        data={jamendoTracks}
+        keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); fetchData(); }}
-            tintColor="#7c3aed"
+            tintColor="#c799ff"
           />
         }
-      >
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Good evening 🎵</Text>
-            <Text style={styles.pageTitle}>Raagsetu</Text>
-          </View>
-          <TouchableOpacity 
-             style={styles.avatarCircle} 
-             onPress={() => router.push('/updateProfile' as any)}
-             activeOpacity={0.7}
-          >
-            {user?.avatar_url ? (
-               <Image source={{ uri: user.avatar_url }} style={{ width: '100%', height: '100%', borderRadius: 22 }} />
-            ) : (
-               <Text style={styles.avatarEmoji}>🎹</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Recently Played */}
-        {recentlyHistory && recentlyHistory.length > 0 && (
+        ListHeaderComponent={
           <>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>Recently Played</Text>
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.greeting}>{getGreeting()}</Text>
+                <Text style={styles.pageTitle}>{user?.name?.split(' ')[0] || 'Ready'}, for some music?</Text>
+              </View>
+              <TouchableOpacity 
+                 style={styles.avatarCircle} 
+                 onPress={() => router.push('/updateProfile')}
+                 activeOpacity={0.7}
+              >
+                {user?.avatar_url ? (
+                   <Image source={{ uri: user.avatar_url }} style={{ width: '100%', height: '100%', borderRadius: 22 }} />
+                ) : (
+                   <View style={styles.avatarPlaceholder}>
+                      <Ionicons name="person" size={20} color="#c799ff" />
+                   </View>
+                )}
+              </TouchableOpacity>
             </View>
+
+            {/* Hero Section */}
+            {ytTracks.length > 0 && ytTracks[0]?.video_id && (
+              <View style={styles.heroContainer}>
+                <Image 
+                  source={{ uri: ytTracks[0].thumbnail }} 
+                  style={styles.heroBg} 
+                />
+                <View style={styles.heroOverlay}>
+                  <Text style={styles.heroBadge}>TOP TRENDING</Text>
+                  <Text style={styles.heroTitle} numberOfLines={1}>{ytTracks[0].title}</Text>
+                  <Text style={styles.heroSubtitle} numberOfLines={1}>
+                    {ytTracks[0].artist} • Global 50
+                  </Text>
+                  <TouchableOpacity 
+                    style={styles.heroBtn} 
+                    onPress={() => handlePlayYT(ytTracks[0], 0)}
+                  >
+                    <Ionicons name="play" size={16} color="#000" />
+                    <Text style={styles.heroBtnText}>Play Now</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Trending Section */}
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Global Charts</Text>
+              <Text style={styles.sectionSubtitle}>Updated every hour</Text>
+            </View>
+            
             <FlatList
               horizontal
-              data={recentlyHistory}
-              keyExtractor={(item, index) => `${item.video_id}-${index}`}
+              data={ytTracks}
+              keyExtractor={(item) => item.video_id}
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
-              renderItem={({ item }) => (
+              contentContainerStyle={{ paddingLeft: 20, paddingRight: 10, paddingBottom: 10 }}
+              renderItem={({ item, index }) => (
                 <TouchableOpacity 
-                  style={styles.ytCard}
-                  onPress={() => playSong(item)}
+                  style={styles.trendingCard}
+                  onPress={() => item.video_id && handlePlayYT(item, index)}
                 >
-                  <Image source={{ uri: item.thumbnail }} style={styles.ytImage} />
-                  <View style={styles.ytInfo}>
-                    <Text style={styles.ytTitle} numberOfLines={2}>{item.title}</Text>
-                    <Text style={styles.ytArtist} numberOfLines={1}>{item.artist}</Text>
+                  <Image source={{ uri: item.thumbnail }} style={styles.trendingImage} />
+                  <View style={styles.trendingInfo}>
+                    <Text style={styles.trendingTitle} numberOfLines={1}>{item.title}</Text>
+                    <Text style={styles.trendingArtist} numberOfLines={1}>{item.artist}</Text>
                   </View>
                 </TouchableOpacity>
               )}
             />
+
+            {/* Recently Played */}
+            {recentlyHistory && recentlyHistory.length > 0 && (
+              <>
+                <View style={styles.sectionRow}>
+                  <Text style={styles.sectionTitle}>Back to the rhythm</Text>
+                </View>
+                <FlatList
+                  horizontal
+                  data={recentlyHistory}
+                  keyExtractor={(item, index) => `${item.video_id || index}-${index}`}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity 
+                      style={styles.ytCard}
+                      onPress={() => item.video_id && playSong(item)}
+                    >
+                      <Image source={{ uri: item.thumbnail }} style={styles.ytImage} />
+                      <View style={styles.ytInfo}>
+                        <Text style={styles.ytTitle} numberOfLines={2}>{item.title}</Text>
+                        <Text style={styles.ytArtist} numberOfLines={1}>{item.artist}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
+              </>
+            )}
+
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Curated Collections</Text>
+            </View>
           </>
-        )}
-
-        {/* YouTube Section */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>YouTube Trending</Text>
-        </View>
-        
-        <FlatList
-          horizontal
-          data={ytTracks}
-          keyExtractor={(item) => item.video_id}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
-          renderItem={({ item, index }) => (
-            <TouchableOpacity 
-              style={styles.ytCard}
-              onPress={() => handlePlayYT(item, index)}
-            >
-              <Image source={{ uri: item.thumbnail }} style={styles.ytImage} />
-              <View style={styles.ytInfo}>
-                <Text style={styles.ytTitle} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.ytArtist} numberOfLines={1}>{item.artist}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-
-        {/* Jamendo Section */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Jamendo Favorites</Text>
-        </View>
-
-        {jamendoTracks.map((item, index) => {
+        }
+        renderItem={({ item, index }) => {
           const isPlaying = playingId === item.id;
           return (
             <TouchableOpacity
-              key={item.id}
               style={[styles.trackRow, isPlaying && styles.trackRowActive]}
               onPress={() => handlePlayJamendo(item)}
               activeOpacity={0.75}
@@ -253,31 +290,32 @@ export default function HomeScreen() {
               <View style={styles.trackRight}>
                 <Text style={styles.trackDuration}>{formatDuration(item.duration)}</Text>
                 <View style={[styles.playCircle, isPlaying && styles.playCircleActive]}>
-                  <Text style={styles.playCircleIcon}>{(isPlaying && status.playing) ? "⏸" : "▶"}</Text>
+                  <Ionicons 
+                    name={(isPlaying && status.playing) ? "pause" : "play"} 
+                    size={14} 
+                    color={isPlaying ? "#000" : "#fff"} 
+                  />
                 </View>
               </View>
             </TouchableOpacity>
           );
-        })}
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Ready to play your favorite tunes.</Text>
-        </View>
-      </ScrollView>
+        }}
+        ListFooterComponent={<View style={{ height: 120 }} />}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#0a0a14" },
+  safe: { flex: 1, backgroundColor: "#0e0e0e" },
   loadingScreen: {
     flex: 1,
-    backgroundColor: "#0a0a14",
+    backgroundColor: "#0e0e0e",
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
   },
-  loadingText: { color: "#7878a8", fontSize: 15 },
+  loadingText: { color: "#adaaaa", fontSize: 15 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -286,95 +324,182 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 20,
   },
-  greeting: { fontSize: 14, color: "#7878a8", marginBottom: 2 },
+  greeting: { fontSize: 14, color: "#adaaaa", marginBottom: 2 },
   pageTitle: {
     fontSize: 26,
     fontWeight: "800",
-    color: "#e2e2ff",
+    color: "#ffffff",
     letterSpacing: -0.3,
   },
   avatarCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#1e1b3a",
+    backgroundColor: "#131313",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "#7c3aed55",
+    borderWidth: 1,
+    borderColor: "rgba(118, 117, 117, 0.2)",
   },
-  avatarEmoji: { fontSize: 22 },
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sectionRow: {
     paddingHorizontal: 20,
     marginTop: 24,
     marginBottom: 16,
   },
-  sectionTitle: { fontSize: 20, fontWeight: "700", color: "#e2e2ff" },
+  sectionTitle: { fontSize: 22, fontWeight: "800", color: "#ffffff", letterSpacing: -0.5 },
+  sectionSubtitle: { fontSize: 13, color: "#adaaaa", marginTop: 2 },
   
-  ytCard: {
-    width: 160,
+  heroContainer: {
+    marginHorizontal: 20,
+    marginTop: 8,
+    height: 200,
+    borderRadius: 24,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#131313',
+  },
+  heroBg: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.6,
+  },
+  heroOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  heroBadge: {
+    backgroundColor: '#ffffff22',
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: -1,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: 13,
+    color: '#adaaaa',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  heroBtn: {
+    backgroundColor: '#c799ff',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  heroBtnText: {
+    color: '#440080',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  trendingCard: {
+    width: 200,
     marginRight: 16,
-    backgroundColor: "#16162a",
+    backgroundColor: "#20201f",
     borderRadius: 16,
     overflow: "hidden",
   },
+  trendingImage: {
+    width: "100%",
+    height: 120,
+    backgroundColor: '#000000',
+  },
+  trendingInfo: {
+    padding: 12,
+  },
+  trendingTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#ffffff",
+    marginBottom: 2,
+  },
+  trendingArtist: {
+    fontSize: 12,
+    color: "#adaaaa",
+  },
+
+  ytCard: {
+    width: 140,
+    marginRight: 16,
+    backgroundColor: "transparent",
+  },
   ytImage: {
     width: "100%",
-    height: 100,
-    backgroundColor: "#1a1a30",
+    height: 140,
+    borderRadius: 12,
+    backgroundColor: '#000000',
   },
   ytInfo: {
-    padding: 10,
+    marginTop: 8,
   },
   ytTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#d0d0f0",
-    lineHeight: 18,
-    height: 36,
+    color: "#ffffff",
+    marginBottom: 2,
   },
   ytArtist: {
     fontSize: 11,
-    color: "#6868a0",
-    marginTop: 4,
+    color: "#adaaaa",
   },
 
   trackRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     marginHorizontal: 8,
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 4,
   },
-  trackRowActive: { backgroundColor: "#1a1a38" },
+  trackRowActive: { backgroundColor: "#20201f" },
   trackArt: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-    marginRight: 12,
-    backgroundColor: "#1a1a30",
+    width: 54,
+    height: 54,
+    borderRadius: 12,
+    marginRight: 16,
+    backgroundColor: '#000000',
   },
   trackInfo: { flex: 1, marginRight: 8 },
-  trackName: { fontSize: 14, fontWeight: "600", color: "#d0d0f0", marginBottom: 2 },
-  trackNameActive: { color: "#a78bfa" },
-  trackArtist: { fontSize: 12, color: "#6868a0" },
+  trackName: { fontSize: 15, fontWeight: "600", color: "#ffffff", marginBottom: 3 },
+  trackNameActive: { color: "#c799ff" },
+  trackArtist: { fontSize: 13, color: "#adaaaa" },
   trackRight: { alignItems: "flex-end", gap: 6 },
-  trackDuration: { color: "#5a5a8a", fontSize: 11 },
+  trackDuration: { color: "#adaaaa", fontSize: 12 },
   playCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#1e1e3a",
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#20201f",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#3a3a60",
   },
-  playCircleActive: { backgroundColor: "#7c3aed", borderColor: "#7c3aed" },
-  playCircleIcon: { fontSize: 12, color: "#fff" },
+  playCircleActive: { backgroundColor: "#c799ff" },
+  playCircleIcon: { fontSize: 12, color: "#ffffff" },
 
-  footer: { alignItems: "center", paddingVertical: 40 },
-  footerText: { color: "#4a4a6a", fontSize: 12 },
+  footer: { alignItems: "center", paddingVertical: 60 },
+  footerText: { color: "#565555", fontSize: 12, letterSpacing: 1 },
 });

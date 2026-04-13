@@ -47,23 +47,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const updateUserProfile = async (userData: Partial<User>) => {
-        if (!user) return;
-        try {
-            const update: any = {
-                ...userData,
-                id: user.id,
-            }
-
-            const { error } = await supabase.from('profiles').upsert(update);
-            if (error) {
-                Alert.alert("Error updating user profile", error.message);
-                return;
-            }
-
-            setUser((prev) => prev ? { ...prev, ...userData } : null);
-        } catch (error) {
-            Alert.alert("Error updating user profile", (error as Error).message);
+        if (!user) throw new Error("No user logged in");
+        
+        const update: any = {
+            ...userData,
+            id: user.id,
+            email: user.email // Include email to satisfy NOT NULL constraint
         }
+
+        const { error } = await supabase.from('profiles').upsert(update);
+        
+        if (error) {
+            console.error("Profile update error:", error, "Update payload:", update);
+            throw error;
+        }
+
+        setUser((prev) => prev ? { ...prev, ...userData } : null);
     }
 
     const fetchUserProfile = async (userId: string): Promise<User | null> => {

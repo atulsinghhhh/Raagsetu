@@ -13,6 +13,8 @@ import Controls from "@/components/Controls";
 import ProgressBar from "@/components/ProgressBar";
 import { HeartButton } from "@/components/HeartButton";
 
+import { Ionicons } from "@expo/vector-icons";
+
 export default function PlayerScreen() {
   const currentSong = usePlayerStore((s) => s.currentSong);
   const router = useRouter();
@@ -31,12 +33,15 @@ export default function PlayerScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backBtn}>←</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+          <Ionicons name="chevron-down" size={28} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Now Playing</Text>
-        <TouchableOpacity onPress={() => router.push("/(app)/queue")}>
-          <Text style={styles.queueBtn}>☰</Text>
+        <View style={styles.headerTitleWrap}>
+            <Text style={styles.headerSubtitle}>PLAYING FROM</Text>
+            <Text style={styles.headerTitle} numberOfLines={1}>Nocturne Editorial</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push("/(app)/queue")} style={styles.headerBtn}>
+          <Ionicons name="list" size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -50,7 +55,7 @@ export default function PlayerScreen() {
 
       {/* Song info */}
       <View style={styles.infoWrap}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, marginRight: 16 }}>
           <Text style={styles.title} numberOfLines={2}>
             {currentSong.title}
           </Text>
@@ -62,10 +67,27 @@ export default function PlayerScreen() {
       </View>
 
       {/* Progress */}
-      <ProgressBar />
+      <View style={styles.progressSection}>
+        <ProgressBar />
+      </View>
 
       {/* Controls */}
-      <Controls />
+      <View style={styles.controlsSection}>
+         <Controls />
+      </View>
+
+      {/* Footer Actions */}
+      <View style={styles.playerFooter}>
+         <TouchableOpacity style={styles.footerBtn}>
+            <Ionicons name="shuffle-outline" size={22} color="#adaaaa" />
+         </TouchableOpacity>
+         <TouchableOpacity style={styles.footerBtn}>
+            <Ionicons name="repeat-outline" size={22} color="#adaaaa" />
+         </TouchableOpacity>
+         <TouchableOpacity style={styles.footerBtn} onPress={() => router.push("/(app)/queue")}>
+            <Ionicons name="layers-outline" size={22} color="#adaaaa" />
+         </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -73,65 +95,78 @@ export default function PlayerScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#0a0a14",
+    backgroundColor: "#0e0e0e",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  backBtn: {
-    fontSize: 24,
-    color: "#d0d0f0",
+  headerBtn: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  headerTitleWrap: { flex: 1, alignItems: 'center' },
+  headerSubtitle: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#565555",
+    letterSpacing: 1.5,
+    marginBottom: 2,
   },
   headerTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#7878a8",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  queueBtn: {
-    fontSize: 22,
-    color: "#d0d0f0",
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#ffffff",
+    letterSpacing: -0.2,
   },
   artworkWrap: {
     alignItems: "center",
-    marginTop: 24,
-    marginBottom: 32,
+    justifyContent: 'center',
+    flex: 1,
+    paddingVertical: 20,
   },
   artwork: {
-    width: 280,
-    height: 280,
-    borderRadius: 20,
-    backgroundColor: "#1a1a30",
-    shadowColor: "#7c3aed",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 16,
+    width: 320,
+    height: 320,
+    borderRadius: 24,
+    backgroundColor: '#131313',
   },
   infoWrap: {
-    paddingHorizontal: 24,
-    alignItems: "center",
+    paddingHorizontal: 32,
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#e2e2ff",
-    textAlign: "left",
-    marginBottom: 6,
-    letterSpacing: -0.3,
+    fontSize: 24,
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
   artist: {
-    fontSize: 15,
-    color: "#7878a8",
-    textAlign: "left",
+    fontSize: 16,
+    color: "#4af8e3",
+    fontWeight: '600',
+  },
+  progressSection: {
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  controlsSection: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  playerFooter: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 40,
+      paddingBottom: 20,
+  },
+  footerBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
   },
   emptyWrap: {
     flex: 1,
@@ -139,7 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   emptyText: {
-    color: "#5a5a8a",
+    color: "#adaaaa",
     fontSize: 16,
   },
 });
