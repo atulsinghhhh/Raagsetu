@@ -3,7 +3,7 @@ import { Song } from "@/types/song";
 // Point this to your backend. On Android emulator use 10.0.2.2; on
 // a physical device use your machine's LAN IP.
 const API_BASE = __DEV__
-  ? "http://10.15.36.113:3000"   // Current network IP
+  ? process.env.EXPO_PUBLIC_API_URL   // Current network IP
   : "http://localhost:3000";    // Production
 
 /**
