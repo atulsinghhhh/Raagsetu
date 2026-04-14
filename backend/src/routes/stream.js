@@ -160,7 +160,7 @@ router.get("/:videoId", async (req, res, next) => {
       title: req.query.title ?? "",
       artist: req.query.artist ?? "",
       thumbnail: req.query.thumbnail ?? "",
-      duration: Number(req.query.duration) || 0,
+      duration: Number(req.query.duration || req.query.duration_sec) || 0,
     };
 
     Promise.all([
