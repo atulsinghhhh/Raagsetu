@@ -9,7 +9,8 @@ export async function searchYoutube(query) {
     "--flat-playlist",
     "--no-warnings",
     "--no-check-certificates",
-    "--extractor-args", "youtube:player-client=web",
+    "--geo-bypass",
+    "--extractor-args", "youtube:player-client=tv",
     `ytsearch10:${query}`,
   ]);
 
@@ -35,7 +36,8 @@ export async function extractAudioUrl(videoId) {
       "-g",
       "--no-warnings",
       "--no-check-certificates",
-      "--extractor-args", "youtube:player-client=web",
+      "--geo-bypass",
+      "--extractor-args", "youtube:player-client=tv",
       `https://www.youtube.com/watch?v=${videoId}`,
     ]);
 
