@@ -64,16 +64,13 @@ function LoginScreen() {
         >
           {/* Brand */}
           <View style={styles.brandRow}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoEmoji}>🎵</Text>
-            </View>
             <Text style={styles.brand}>Raagsetu</Text>
           </View>
 
           {/* Headline */}
           <Text style={styles.headline}>Welcome back</Text>
           <Text style={styles.subheadline}>
-            Sign in to continue your musical journey
+            Sign in to dive back into your music.
           </Text>
 
           {/* Card */}
@@ -82,7 +79,7 @@ function LoginScreen() {
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>✉️</Text>
+                {/* <Text style={styles.inputIcon}>✉️</Text> */}
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
@@ -99,7 +96,7 @@ function LoginScreen() {
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
+                {/* <Text style={styles.inputIcon}>🔒</Text> */}
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"

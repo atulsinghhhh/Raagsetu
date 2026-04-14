@@ -71,16 +71,13 @@ function SignupScreen() {
         >
           {/* Brand */}
           <View style={styles.brandRow}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoEmoji}>🎵</Text>
-            </View>
             <Text style={styles.brand}>Raagsetu</Text>
           </View>
 
           {/* Headline */}
           <Text style={styles.headline}>Create account</Text>
           <Text style={styles.subheadline}>
-            Join a community of music lovers today
+            Dive into your music world.
           </Text>
 
           {/* Card */}
@@ -90,7 +87,7 @@ function SignupScreen() {
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>✉️</Text>
+                {/* <Text style={styles.inputIcon}>✉️</Text> */}
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
@@ -107,7 +104,7 @@ function SignupScreen() {
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
+                {/* <Text style={styles.inputIcon}></Text> */}
                 <TextInput
                   style={styles.input}
                   placeholder="Min. 6 characters"
@@ -155,7 +152,7 @@ function SignupScreen() {
                     styles.inputWrapperError,
                 ]}
               >
-                <Text style={styles.inputIcon}>🛡️</Text>
+                {/* <Text style={styles.inputIcon}>🛡️</Text> */}
                 <TextInput
                   style={styles.input}
                   placeholder="Re-enter password"
@@ -178,15 +175,6 @@ function SignupScreen() {
               )}
             </View>
 
-            {/* Perks row */}
-            <View style={styles.perksRow}>
-              {["Free forever plan", "No credit card needed", "Cancel anytime"].map((perk) => (
-                <View key={perk} style={styles.perkChip}>
-                  <Text style={styles.perkCheck}>✓</Text>
-                  <Text style={styles.perkText}>{perk}</Text>
-                </View>
-              ))}
-            </View>
 
             {/* Sign Up Button */}
             <Animated.View style={{ transform: [{ scale: buttonScale }], marginTop: 4 }}>
