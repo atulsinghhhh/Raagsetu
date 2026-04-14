@@ -66,36 +66,44 @@ router.get("/:videoId", async (req, res, next) => {
     } catch (err) {
       console.log("yt-dlp failed → trying fallback");
 
-      // ✅ 3. Fallback: Piped API (THIS FIXES YOUR ISSUE)
-      try {
-        const response = await fetch(
-          `https://piped.video/api/v1/streams/${videoId}`
-        );
+      // ✅ 3. Fallback: Piped API (using multiple instances)
+      const pipedInstances = [
+        "https://pipedapi.kavin.rocks",
+        "https://api.piped.dev",
+        "https://piped-api.lunar.icu"
+      ];
 
-        const data = await response.json();
+      for (const instance of pipedInstances) {
+        try {
+          console.log(`trying fallback instance: ${instance}`);
+          const response = await fetch(`${instance}/api/v1/streams/${videoId}`, {
+            signal: AbortSignal.timeout(5000) // 5s timeout per instance
+          });
 
-        const audioStreams = data.audioStreams || [];
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        if (!audioStreams.length) {
-          throw new Error("No audio streams found");
+          const data = await response.json();
+          const audioStreams = data.audioStreams || [];
+
+          if (audioStreams.length > 0) {
+            // pick highest bitrate
+            const bestAudio = audioStreams.sort(
+              (a, b) => (b.bitrate || 0) - (a.bitrate || 0)
+            )[0];
+
+            url = bestAudio.url;
+            source = `piped:${new URL(instance).hostname}`;
+            console.log("fallback success");
+            break;
+          }
+        } catch (instanceErr) {
+          console.warn(`${instance} failed:`, instanceErr.message);
+          continue; // try next
         }
+      }
 
-        // pick highest bitrate
-        const bestAudio = audioStreams.sort(
-          (a, b) => (b.bitrate || 0) - (a.bitrate || 0)
-        )[0];
-
-        url = bestAudio.url;
-        source = "piped";
-
-        console.log("fallback success (piped)");
-      } catch (fallbackErr) {
-        console.error("fallback failed:", fallbackErr.message);
-
-        return res.status(500).json({
-          success: false,
-          error: "Streaming failed (yt-dlp + fallback failed)",
-        });
+      if (!url) {
+        throw new Error("All fallback instances failed");
       }
     }
 
