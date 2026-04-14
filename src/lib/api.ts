@@ -2,9 +2,7 @@ import { Song } from "@/types/song";
 
 // Point this to your backend. On Android emulator use 10.0.2.2; on
 // a physical device use your machine's LAN IP.
-const API_BASE = __DEV__
-  ? process.env.EXPO_PUBLIC_API_URL   // Current network IP
-  : "http://localhost:3000";    // Production
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || "https://raagsetu-2.onrender.com";
 
 /**
  * Search songs via the backend /search route.
