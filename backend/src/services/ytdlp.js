@@ -57,7 +57,7 @@ export async function extractAudioUrl(videoId) {
       "--no-warnings",
       "--no-check-certificates",
       "--geo-bypass",
-      "--extractor-args", "youtube:player-client=web",
+      "--extractor-args", "youtube:player-client=android",
       `https://www.youtube.com/watch?v=${videoId}`,
     ]);
 
