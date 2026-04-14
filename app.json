@@ -1,35 +1,70 @@
 {
   "expo": {
     "name": "Raagsetu",
-    "slug": "Raagsetu",
+    "slug": "raagsetu",
     "version": "1.0.0",
+
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "raagsetu",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0D0014",
+
+    "icon": "./assets/images/1_app_icon_512.png",
+
+    "splash": {
+      "image": "./assets/images/2_splash_logo_540x960.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D0014"
+    },
+
+    "assetBundlePatterns": ["**/*"],
+
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+
+    "jsEngine": "hermes",
+
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.atulraagsetu.app",
+      "bundleIdentifier": "com.atulsinghh.raagsetu",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "requireFullScreen": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"],
+        "NSPhotoLibraryUsageDescription": "Raagsetu uses your photo library to set playlist cover images.",
+        "NSMicrophoneUsageDescription": "Raagsetu needs microphone access for voice search.",
+        "CFBundleAllowMixedLocalizations": true
       }
     },
+
     "android": {
+      "package": "com.atulsinghh.raagsetu",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/3_adaptive_foreground_512.png",
+        "backgroundColor": "#0D0014"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.atulsinghh.Raagsetu"
+      "permissions": [
+        "INTERNET",
+        "READ_MEDIA_AUDIO",
+        "READ_MEDIA_IMAGES",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
     },
+
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/1_app_icon_512.png"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -42,35 +77,20 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
-          }
+          "image": "./assets/images/logo.png",
+          "imageWidth": 100
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you share them with your friends.",
-          "colors": {
-            "cropToolbarColor": "#000000"
-          },
-          "dark": {
-            "colors": {
-              "cropToolbarColor": "#000000"
-            }
-          }
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
       ],
       [
         "expo-sharing",
         {
-          "ios": {
-            "enabled": true,
-            "activationRule": {
-              "supportsImageWithMaxCount": 5
-            }
-          },
+          "ios": { "enabled": true },
           "android": {
             "enabled": true,
             "singleShareMimeTypes": ["audio/*"],
@@ -79,16 +99,18 @@
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
-      "router": {},
       "eas": {
         "projectId": "956f7e75-8993-48ad-ae8f-16c4ff55b74b"
       }
     },
+
     "owner": "atulsinghh"
   }
 }
