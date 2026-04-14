@@ -61,6 +61,24 @@ app.get("/debug-cookies", (req, res) => {
   }
 });
 
+app.get("/test-yt", async (req, res) => {
+  try {
+    const ytdlp = require("yt-dlp-exec");
+
+    const result = await ytdlp(
+      "https://www.youtube.com/watch?v=tQHAwV9B8hQ",
+      {
+        cookies: "/usr/src/app/cookies.txt",
+        dumpSingleJson: true,
+      }
+    );
+
+    res.json({ success: true, title: result.title });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 app.use("/search", searchRouter);
 app.use("/stream", streamRouter);
 

@@ -103,7 +103,38 @@ router.get("/:videoId", async (req, res, next) => {
       }
 
       if (!url) {
-        throw new Error("All fallback instances failed");
+        console.log("Piped failed → trying Invidious");
+        const invidiousInstances = [
+          "https://inv.tux.rs",
+          "https://invidious.snopyta.org",
+          "https://yewtu.be"
+        ];
+
+        for (const instance of invidiousInstances) {
+          try {
+            console.log(`trying invidious instance: ${instance}`);
+            const response = await fetch(`${instance}/api/v1/videos/${videoId}`, {
+              signal: AbortSignal.timeout(5000)
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const data = await response.json();
+            const format = data.adaptiveFormats?.find(f => f.type?.includes("audio/webm") || f.type?.includes("audio/mp4"));
+            
+            if (format?.url) {
+              url = format.url;
+              source = `invidious:${new URL(instance).hostname}`;
+              break;
+            }
+          } catch (invErr) {
+            console.warn(`${instance} failed:`, invErr.message);
+            continue;
+          }
+        }
+      }
+
+      if (!url) {
+        throw new Error("All fallback instances failed (yt-dlp, Piped, Invidious)");
       }
     }
 

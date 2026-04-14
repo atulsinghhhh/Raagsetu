@@ -52,24 +52,34 @@ export async function searchYoutube(query) {
 export async function extractAudioUrl(videoId) {
   try {
     const args = getYtdlpArgs([
-      "-f", "bestaudio/best",
+      "-f", "ba",
       "-g",
       "--no-warnings",
       "--no-check-certificates",
       "--geo-bypass",
-      "--extractor-args", "youtube:player-client=ios,tv",
+      "--extractor-args", "youtube:player-client=web",
       `https://www.youtube.com/watch?v=${videoId}`,
     ]);
 
-    const { stdout } = await execFileAsync("yt-dlp", args);
+    const { stdout, stderr } = await execFileAsync("yt-dlp", args);
 
     const url = stdout.trim();
     if (!url) {
+      if (stderr) console.error("yt-dlp stderr:", stderr);
       throw new Error("No URL extracted");
     }
     return url;
   } catch (err) {
-    console.error(`Failed to extract audio URL for ${videoId}:`, err.message);
+    // Check for bot detection specifically
+    const isBotError = err.message.includes("confirm you're not a bot") || 
+                       err.message.includes("Sign in to confirm");
+    
+    console.error(`yt-dlp error for ${videoId}:`, {
+      message: err.message,
+      isBotError,
+      hasCookies: !!findCookiesFile()
+    });
+    
     throw err;
   }
 }
