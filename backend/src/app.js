@@ -5,8 +5,11 @@ import { promisify } from "node:util";
 import searchRouter from "./routes/search.js";
 import streamRouter from "./routes/stream.js";
 import errorHandler from "./middleware/errorHandler.js";
+import fs from "fs";
+import path from "path";
 
 const execFileAsync = promisify(execFile);
+const COOKIES_PATH = path.join(process.cwd(), "src/cookies.txt");
 
 const app = express();
 
