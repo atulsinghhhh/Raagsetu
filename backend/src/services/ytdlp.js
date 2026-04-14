@@ -8,7 +8,8 @@ export async function searchYoutube(query) {
     "--dump-json",
     "--flat-playlist",
     "--no-warnings",
-    "--extractor-args", "youtube:player-client=android,web,ios",
+    "--no-check-certificates",
+    "--extractor-args", "youtube:player-client=web",
     `ytsearch10:${query}`,
   ]);
 
@@ -28,13 +29,23 @@ export async function searchYoutube(query) {
 }
 
 export async function extractAudioUrl(videoId) {
-  const { stdout } = await execFileAsync("yt-dlp", [
-    "-f", "bestaudio/best",
-    "-g",
-    "--no-warnings",
-    "--extractor-args", "youtube:player-client=android,web,ios",
-    `https://www.youtube.com/watch?v=${videoId}`,
-  ]);
+  try {
+    const { stdout } = await execFileAsync("yt-dlp", [
+      "-f", "bestaudio/best",
+      "-g",
+      "--no-warnings",
+      "--no-check-certificates",
+      "--extractor-args", "youtube:player-client=web",
+      `https://www.youtube.com/watch?v=${videoId}`,
+    ]);
 
-  return stdout.trim();
+    const url = stdout.trim();
+    if (!url) {
+      throw new Error("No URL extracted");
+    }
+    return url;
+  } catch (err) {
+    console.error(`Failed to extract audio URL for ${videoId}:`, err.message);
+    throw err;
+  }
 }
