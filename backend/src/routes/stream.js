@@ -134,7 +134,35 @@ router.get("/:videoId", async (req, res, next) => {
       }
 
       if (!url) {
-        throw new Error("All fallback instances failed (yt-dlp, Piped, Invidious)");
+        console.log("Invidious failed → trying Cobalt (Premium Fallback)");
+        try {
+          const cobaltResponse = await fetch("https://api.cobalt.tools/api/json", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({
+              url: `https://www.youtube.com/watch?v=${videoId}`,
+              downloadMode: "audio",
+              audioFormat: "mp3",
+              audioBitrate: "128"
+            }),
+            signal: AbortSignal.timeout(10000)
+          });
+
+          const cobaltData = await cobaltResponse.json();
+          if (cobaltData.status === "stream" || cobaltData.status === "tunnel" || cobaltData.status === "redirect") {
+            url = cobaltData.url;
+            source = "cobalt";
+          }
+        } catch (cobaltErr) {
+          console.warn("Cobalt fallback failed:", cobaltErr.message);
+        }
+      }
+
+      if (!url) {
+        throw new Error("All fallback instances failed (yt-dlp, Piped, Invidious, Cobalt)");
       }
     }
 

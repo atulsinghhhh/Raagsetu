@@ -61,21 +61,32 @@ app.get("/debug-cookies", (req, res) => {
   }
 });
 
-app.get("/test-yt", async (req, res) => {
+app.get("/debug-yt", async (req, res) => {
   try {
-    const ytdlp = require("yt-dlp-exec");
+    const videoId = "tQHAwV9B8hQ";
+    const cookiesPath = findCookiesFile();
+    
+    // Test command: get just the title using yt-dlp directly
+    const args = ["--get-title", "--no-warnings", "--no-check-certificates"];
+    if (cookiesPath) args.push("--cookies", cookiesPath);
+    args.push(`https://www.youtube.com/watch?v=${videoId}`);
 
-    const result = await ytdlp(
-      "https://www.youtube.com/watch?v=tQHAwV9B8hQ",
-      {
-        cookies: "/usr/src/app/cookies.txt",
-        dumpSingleJson: true,
-      }
-    );
+    const { stdout, stderr } = await execFileAsync("yt-dlp", args, { timeout: 10000 });
 
-    res.json({ success: true, title: result.title });
+    res.json({
+      success: true,
+      title: stdout.trim(),
+      stderr: stderr ? stderr.trim() : null,
+      usingCookies: !!cookiesPath,
+      cookiesPath: cookiesPath
+    });
   } catch (err) {
-    res.json({ success: false, error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      command: err.cmd,
+      hasCookies: !!findCookiesFile()
+    });
   }
 });
 
