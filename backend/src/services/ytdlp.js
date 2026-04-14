@@ -3,18 +3,15 @@ import { promisify } from "node:util";
 import fs from "node:fs";
 import path from "node:path";
 
+import { findCookiesFile } from "./cookieService.js";
+
 const execFileAsync = promisify(execFile);
-const COOKIES_PATH = path.join(process.cwd(), "cookies.txt");
-const SRC_COOKIES_PATH = path.join(process.cwd(), "src", "cookies.txt");
 
 function getYtdlpArgs(baseArgs) {
   const args = [...baseArgs];
-  if (fs.existsSync(COOKIES_PATH)) {
-    args.push("--cookies", COOKIES_PATH);
-  } else if (fs.existsSync(SRC_COOKIES_PATH)) {
-    args.push("--cookies", SRC_COOKIES_PATH);
-  } else if (fs.existsSync("/app/cookies.txt")) {
-    args.push("--cookies", "/app/cookies.txt");
+  const cookiesPath = findCookiesFile();
+  if (cookiesPath) {
+    args.push("--cookies", cookiesPath);
   }
   return args;
 }

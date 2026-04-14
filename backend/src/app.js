@@ -1,15 +1,14 @@
 import express from "express";
 import cors from "cors";
+import fs from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import searchRouter from "./routes/search.js";
 import streamRouter from "./routes/stream.js";
 import errorHandler from "./middleware/errorHandler.js";
-import fs from "fs";
-import path from "path";
+import { findCookiesFile } from "./services/cookieService.js";
 
 const execFileAsync = promisify(execFile);
-const COOKIES_PATH = path.join(process.cwd(), "src/cookies.txt");
 
 const app = express();
 
@@ -40,17 +39,18 @@ app.get("/debug", async (req, res) => {
 
 app.get("/debug-cookies", (req, res) => {
   try {
-    const exists = fs.existsSync(COOKIES_PATH);
+    const cookiesPath = findCookiesFile();
+    const exists = Boolean(cookiesPath);
 
     let size = 0;
     if (exists) {
-      const stats = fs.statSync(COOKIES_PATH);
+      const stats = fs.statSync(cookiesPath);
       size = stats.size;
     }
 
     res.json({
       cookiesExist: exists,
-      cookiesPath: COOKIES_PATH,
+      activePath: cookiesPath,
       size,
       cwd: process.cwd(),
     });
