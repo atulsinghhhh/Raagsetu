@@ -52,12 +52,13 @@ export async function searchYoutube(query) {
 export async function extractAudioUrl(videoId) {
   try {
     const args = getYtdlpArgs([
-      "-f", "ba",
+      "-f", "bestaudio/best",
       "-g",
       "--no-warnings",
       "--no-check-certificates",
       "--geo-bypass",
-      "--extractor-args", "youtube:player-client=android",
+      "--no-cache-dir",
+      "--extractor-args", "youtube:player-client=android,web",
       `https://www.youtube.com/watch?v=${videoId}`,
     ]);
 

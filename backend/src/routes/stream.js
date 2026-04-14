@@ -70,7 +70,9 @@ router.get("/:videoId", async (req, res, next) => {
       const pipedInstances = [
         "https://pipedapi.kavin.rocks",
         "https://api.piped.dev",
-        "https://piped-api.lunar.icu"
+        "https://piped-api.lunar.icu",
+        "https://pipedapi.rimgo.lol",
+        "https://pipedapi.tinfoil-hat.net"
       ];
 
       for (const instance of pipedInstances) {
@@ -78,7 +80,7 @@ router.get("/:videoId", async (req, res, next) => {
         try {
           console.log(`trying Piped: ${instance}`);
           const response = await fetch(`${instance}/api/v1/streams/${videoId}`, {
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(10000)
           });
           if (!response.ok) continue;
 
@@ -94,13 +96,18 @@ router.get("/:videoId", async (req, res, next) => {
 
       // Fallback 2: Invidious
       if (!url) {
-        const invidiousInstances = ["https://inv.tux.rs", "https://yewtu.be"];
+        const invidiousInstances = [
+          "https://inv.tux.rs",
+          "https://yewtu.be",
+          "https://invidious.snopyta.org",
+          "https://invidious.nerdvpn.de"
+        ];
         for (const instance of invidiousInstances) {
           if (url) break;
           try {
             console.log(`trying Invidious: ${instance}`);
             const response = await fetch(`${instance}/api/v1/videos/${videoId}`, {
-              signal: AbortSignal.timeout(5000)
+              signal: AbortSignal.timeout(10000)
             });
             const data = await response.json();
             const format = data.adaptiveFormats?.find(f => f.type?.includes("audio"));
@@ -112,11 +119,29 @@ router.get("/:videoId", async (req, res, next) => {
         }
       }
 
-      // Fallback 3: Cobalt
+      // Fallback 4: Shisui API (High Performance Proxy)
       if (!url) {
         try {
-          console.log("trying Cobalt fallback...");
-          const res = await fetch("https://api.cobalt.tools/api/json", {
+          console.log("trying Shisui fallback...");
+          const res = await fetch(`https://shisui.xyz/api/v1/streams/${videoId}`, {
+            signal: AbortSignal.timeout(10000)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.audio?.[0]?.url) {
+              url = data.audio[0].url;
+              source = "shisui";
+            }
+          }
+        } catch (e) {
+          console.warn("Shisui fallback failed:", e.message);
+        }
+      }
+
+      if (!url) {
+        try {
+          console.log("trying Cobalt API (v10 format)...");
+          const cobaltResponse = await fetch("https://api.cobalt.tools/api/json", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -124,17 +149,32 @@ router.get("/:videoId", async (req, res, next) => {
             },
             body: JSON.stringify({
               url: `https://www.youtube.com/watch?v=${videoId}`,
-              downloadMode: "audio",
+              videoQuality: "720",
               audioFormat: "mp3",
-              audioBitrate: "128"
+              filenameStyle: "pretty",
+              downloadMode: "audio",
+              youtubeVideoCodec: "h264",
+              isAudioOnly: true
             }),
             signal: AbortSignal.timeout(10000)
           });
 
-          const cobaltData = await res.json();
-          if (cobaltData.url) {
-            url = cobaltData.url;
-            source = "cobalt";
+          if (cobaltResponse.ok) {
+            const cobaltData = await cobaltResponse.json();
+            console.log("Cobalt debug data:", JSON.stringify(cobaltData));
+            if (cobaltData.url) {
+              url = cobaltData.url;
+              source = "cobalt:v10";
+            } else if (cobaltData.status === "redirect" && cobaltData.url) {
+              url = cobaltData.url;
+              source = "cobalt:redirect";
+            } else if (cobaltData.status === "stream" && cobaltData.url) {
+              url = cobaltData.url;
+              source = "cobalt:stream";
+            }
+          } else {
+            const errText = await cobaltResponse.text();
+            console.warn(`Cobalt API error (${cobaltResponse.status}): ${errText}`);
           }
         } catch (cobaltErr) {
           console.warn("Cobalt fallback failed:", cobaltErr.message);
@@ -154,13 +194,15 @@ router.get("/:videoId", async (req, res, next) => {
       }
     }
 
-    // ✅ 5. Fire-and-forget Supabase
+    // Ensure duration is captured correctly from query string
+    // Accepting both formats for maximum frontend compatibility
+    const rawDuration = req.query.duration || req.query.duration_sec;
     const songMeta = {
       videoId,
-      title: req.query.title ?? "",
-      artist: req.query.artist ?? "",
+      title: req.query.title ?? "Unknown Track",
+      artist: req.query.artist ?? "Unknown Artist",
       thumbnail: req.query.thumbnail ?? "",
-      duration: Number(req.query.duration || req.query.duration_sec) || 0,
+      duration: Number(rawDuration) || 0,
     };
 
     Promise.all([
