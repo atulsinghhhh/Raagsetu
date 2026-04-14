@@ -66,7 +66,30 @@ router.get("/:videoId", async (req, res, next) => {
     } catch (err) {
       console.log("yt-dlp failed → trying fallbacks");
 
-      // Fallback 1: Invidious (Most reliable currently)
+      // Fallback 1: Cobalt Direct (Simplified v10)
+      if (!url) {
+        try {
+          console.log("trying Cobalt Direct...");
+          const res = await fetch("https://api.cobalt.tools/api/json", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({
+              url: `https://www.youtube.com/watch?v=${videoId}`,
+              downloadMode: "audio",
+              audioFormat: "mp3",
+              isAudioOnly: true
+            }),
+            signal: AbortSignal.timeout(10000)
+          });
+          const data = await res.json();
+          if (data.url) {
+            url = data.url;
+            source = "cobalt:direct";
+          }
+        } catch (e) { /* tried */ }
+      }
+
+      // Fallback 2: Invidious (Most reliable currently)
       if (!url) {
         const invidiousInstances = [
           "https://yewtu.be",
@@ -101,7 +124,7 @@ router.get("/:videoId", async (req, res, next) => {
         }
       }
 
-      // Fallback 2: Piped API
+      // Fallback 4: Piped API
       if (!url) {
         const pipedInstances = [
           "https://pipedapi.kavin.rocks",
@@ -131,70 +154,8 @@ router.get("/:videoId", async (req, res, next) => {
         }
       }
 
-      // Fallback 3: Shisui API (High Performance Proxy)
       if (!url) {
-        try {
-          console.log("trying Shisui fallback...");
-          const res = await fetch(`https://shisui.xyz/api/v1/streams/${videoId}`, {
-            signal: AbortSignal.timeout(10000)
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.audio?.[0]?.url) {
-              url = data.audio[0].url;
-              source = "shisui";
-            }
-          }
-        } catch (e) {
-          console.warn("Shisui fallback failed:", e.message);
-        }
-      }
-
-      if (!url) {
-        try {
-          console.log("trying Cobalt API (v10 format)...");
-          const cobaltResponse = await fetch("https://api.cobalt.tools/api/json", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            body: JSON.stringify({
-              url: `https://www.youtube.com/watch?v=${videoId}`,
-              videoQuality: "720",
-              audioFormat: "mp3",
-              filenameStyle: "pretty",
-              downloadMode: "audio",
-              youtubeVideoCodec: "h264",
-              isAudioOnly: true
-            }),
-            signal: AbortSignal.timeout(10000)
-          });
-
-          if (cobaltResponse.ok) {
-            const cobaltData = await cobaltResponse.json();
-            console.log("Cobalt debug data:", JSON.stringify(cobaltData));
-            if (cobaltData.url) {
-              url = cobaltData.url;
-              source = "cobalt:v10";
-            } else if (cobaltData.status === "redirect" && cobaltData.url) {
-              url = cobaltData.url;
-              source = "cobalt:redirect";
-            } else if (cobaltData.status === "stream" && cobaltData.url) {
-              url = cobaltData.url;
-              source = "cobalt:stream";
-            }
-          } else {
-            const errText = await cobaltResponse.text();
-            console.warn(`Cobalt API error (${cobaltResponse.status}): ${errText}`);
-          }
-        } catch (cobaltErr) {
-          console.warn("Cobalt fallback failed:", cobaltErr.message);
-        }
-      }
-
-      if (!url) {
-        throw new Error("All fallback instances failed (yt-dlp, Piped, Invidious, Cobalt)");
+        throw new Error("All fallback instances failed (yt-dlp, Cobalt, Invidious, Piped)");
       }
     }
 
