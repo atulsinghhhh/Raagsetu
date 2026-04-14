@@ -5,7 +5,39 @@ import { upsertSong, insertPlayHistory } from "../services/supabase.js";
 
 const router = Router();
 
-const STREAM_TTL = 21600; // 6 hours in seconds
+const STREAM_TTL = 21600; // Fallback: 6 hours in seconds
+const STREAM_EXPIRY_SAFETY_WINDOW = 60; // Avoid serving links that are about to expire
+
+function getStreamExpiryTimestamp(url) {
+  try {
+    const parsed = new URL(url);
+    const expire = Number(parsed.searchParams.get("expire"));
+    return Number.isFinite(expire) ? expire : null;
+  } catch {
+    return null;
+  }
+}
+
+function isStreamUrlFresh(url) {
+  const expiresAt = getStreamExpiryTimestamp(url);
+  if (!expiresAt) {
+    return true;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  return expiresAt - now > STREAM_EXPIRY_SAFETY_WINDOW;
+}
+
+function getStreamCacheTtl(url) {
+  const expiresAt = getStreamExpiryTimestamp(url);
+  if (!expiresAt) {
+    return STREAM_TTL;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const ttl = expiresAt - now - STREAM_EXPIRY_SAFETY_WINDOW;
+  return ttl > 0 ? Math.min(ttl, STREAM_TTL) : 0;
+}
 
 /**
  * GET /stream/:videoId
@@ -21,20 +53,24 @@ const STREAM_TTL = 21600; // 6 hours in seconds
 router.get("/:videoId", async (req, res, next) => {
   try {
     const { videoId } = req.params;
+    const forceFresh = req.query.fresh === "1";
 
     // 1. Check Redis cache
     const cacheKey = `stream:${videoId}`;
-    const cached = await getCache(cacheKey);
+    const cached = forceFresh ? null : await getCache(cacheKey);
 
-    if (cached) {
+    if (cached && isStreamUrlFresh(cached)) {
       return res.json({ success: true, data: { url: cached, cached: true } });
     }
 
     // 2. Cache miss — extract via yt-dlp
     const url = await extractAudioUrl(videoId);
 
-    // 3. Save to Redis (6 h TTL)
-    await setCache(cacheKey, url, STREAM_TTL);
+    // 3. Save to Redis using the media URL's real expiry when available
+    const cacheTtl = getStreamCacheTtl(url);
+    if (cacheTtl > 0) {
+      await setCache(cacheKey, url, cacheTtl);
+    }
 
     // 4. Fire-and-forget Supabase writes
     const songMeta = {
