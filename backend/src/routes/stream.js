@@ -66,41 +66,13 @@ router.get("/:videoId", async (req, res, next) => {
     } catch (err) {
       console.log("yt-dlp failed → trying fallbacks");
 
-      // Fallback 1: Piped API
-      const pipedInstances = [
-        "https://pipedapi.kavin.rocks",
-        "https://api.piped.dev",
-        "https://piped-api.lunar.icu",
-        "https://pipedapi.rimgo.lol",
-        "https://pipedapi.tinfoil-hat.net"
-      ];
-
-      for (const instance of pipedInstances) {
-        if (url) break;
-        try {
-          console.log(`trying Piped: ${instance}`);
-          const response = await fetch(`${instance}/api/v1/streams/${videoId}`, {
-            signal: AbortSignal.timeout(10000)
-          });
-          if (!response.ok) continue;
-
-          const data = await response.json();
-          const streams = data.audioStreams || [];
-          if (streams.length > 0) {
-            const best = streams.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
-            url = best.url;
-            source = `piped:${new URL(instance).hostname}`;
-          }
-        } catch (e) { /* silent fail, try next */ }
-      }
-
-      // Fallback 2: Invidious
+      // Fallback 1: Invidious (Most reliable currently)
       if (!url) {
         const invidiousInstances = [
-          "https://inv.tux.rs",
           "https://yewtu.be",
-          "https://invidious.snopyta.org",
-          "https://invidious.nerdvpn.de"
+          "https://inv.tux.rs",
+          "https://invidious.nerdvpn.de",
+          "https://invidious.snopyta.org"
         ];
         for (const instance of invidiousInstances) {
           if (url) break;
@@ -109,17 +81,54 @@ router.get("/:videoId", async (req, res, next) => {
             const response = await fetch(`${instance}/api/v1/videos/${videoId}`, {
               signal: AbortSignal.timeout(10000)
             });
+            if (!response.ok) continue;
+
             const data = await response.json();
-            const format = data.adaptiveFormats?.find(f => f.type?.includes("audio"));
+            // Try to find the best audio stream
+            const format = data.adaptiveFormats?.find(f => 
+              f.type?.includes("audio") || (f.container === "m4a" && !f.type?.includes("video"))
+            );
+            
             if (format?.url) {
               url = format.url;
               source = `invidious:${new URL(instance).hostname}`;
+              console.log(`Invidious success: ${instance}`);
             }
           } catch (e) { /* try next */ }
         }
       }
 
-      // Fallback 4: Shisui API (High Performance Proxy)
+      // Fallback 2: Piped API
+      if (!url) {
+        const pipedInstances = [
+          "https://pipedapi.kavin.rocks",
+          "https://api.piped.dev",
+          "https://piped-api.lunar.icu",
+          "https://pipedapi.rimgo.lol",
+          "https://pipedapi.tinfoil-hat.net"
+        ];
+
+        for (const instance of pipedInstances) {
+          if (url) break;
+          try {
+            console.log(`trying Piped: ${instance}`);
+            const response = await fetch(`${instance}/api/v1/streams/${videoId}`, {
+              signal: AbortSignal.timeout(10000)
+            });
+            if (!response.ok) continue;
+
+            const data = await response.json();
+            const streams = data.audioStreams || [];
+            if (streams.length > 0) {
+              const best = streams.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
+              url = best.url;
+              source = `piped:${new URL(instance).hostname}`;
+            }
+          } catch (e) { /* silent fail, try next */ }
+        }
+      }
+
+      // Fallback 3: Shisui API (High Performance Proxy)
       if (!url) {
         try {
           console.log("trying Shisui fallback...");
