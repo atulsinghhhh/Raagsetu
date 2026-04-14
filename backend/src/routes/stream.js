@@ -72,7 +72,10 @@ router.get("/:videoId", async (req, res, next) => {
           "https://yewtu.be",
           "https://inv.tux.rs",
           "https://invidious.nerdvpn.de",
-          "https://invidious.snopyta.org"
+          "https://invidious.snopyta.org",
+          "https://invidious.flokinet.to",
+          "https://invidious.lunar.icu",
+          "https://inv.nadeko.net"
         ];
         for (const instance of invidiousInstances) {
           if (url) break;
@@ -87,7 +90,7 @@ router.get("/:videoId", async (req, res, next) => {
             // Try to find the best audio stream
             const format = data.adaptiveFormats?.find(f => 
               f.type?.includes("audio") || (f.container === "m4a" && !f.type?.includes("video"))
-            );
+            ) || data.formatStreams?.find(f => f.type?.includes("audio"));
             
             if (format?.url) {
               url = format.url;
