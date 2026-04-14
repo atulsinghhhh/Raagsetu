@@ -41,3 +41,14 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Cookies
+cookies.txt
+backend/cookies.txt
+backend/src/cookies.txt
+
+
+# In Render dashboard → Shell
+cat > /app/cookies.txt << 'EOF'
+# paste your cookies content here
+EOF
