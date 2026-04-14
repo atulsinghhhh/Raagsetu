@@ -74,14 +74,6 @@
         }
       ],
       [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#0D0014",
-          "image": "./assets/images/2_splash_logo_540x960.png",
-          "imageWidth": 100
-        }
-      ],
-      [
         "expo-image-picker",
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
