@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getCache, setCache } from "../services/redis.js";
 import { extractAudioUrl } from "../services/ytdlp.js";
+import { extractWithPlayDl } from "../services/playDl.js";
 import { upsertSong, insertPlayHistory } from "../services/supabase.js";
 
 const router = Router();
@@ -64,7 +65,18 @@ router.get("/:videoId", async (req, res, next) => {
       source = "ytdlp";
       console.log("yt-dlp success");
     } catch (err) {
-      console.log("yt-dlp failed → trying fallbacks");
+      console.log("yt-dlp failed → trying play-dl...");
+
+      // Fallback 0: play-dl (Node.js library, same server, different fingerprint)
+      if (!url) {
+        try {
+          url = await extractWithPlayDl(videoId);
+          source = "play-dl";
+          console.log("play-dl success!");
+        } catch(e) {
+          console.warn("play-dl failed:", e.message);
+        }
+      }
 
       // Fallback 1: Cobalt v10 community instances (no JWT required)
       if (!url) {

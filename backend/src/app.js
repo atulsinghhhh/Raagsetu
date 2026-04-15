@@ -7,6 +7,7 @@ import searchRouter from "./routes/search.js";
 import streamRouter from "./routes/stream.js";
 import errorHandler from "./middleware/errorHandler.js";
 import { findCookiesFile } from "./services/cookieService.js";
+import { extractWithPlayDl } from "./services/playDl.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -87,6 +88,16 @@ app.get("/debug-yt", async (req, res) => {
       command: err.cmd,
       hasCookies: !!findCookiesFile()
     });
+  }
+});
+
+app.get("/debug-playdl", async (req, res) => {
+  const videoId = req.query.v || "tQHAwV9B8hQ";
+  try {
+    const url = await extractWithPlayDl(videoId);
+    res.json({ success: true, url: url.substring(0, 100) + "..." });
+  } catch(e) {
+    res.json({ success: false, error: e.message });
   }
 });
 
