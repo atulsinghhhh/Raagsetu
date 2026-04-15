@@ -50,37 +50,33 @@ export async function searchYoutube(query) {
 }
 
 export async function extractAudioUrl(videoId) {
-  try {
-    const args = getYtdlpArgs([
-      "-f", "bestaudio/best",
-      "-g",
-      "--no-warnings",
-      "--no-check-certificates",
-      "--geo-bypass",
-      "--no-cache-dir",
-      "--extractor-args", "youtube:player-client=android,web",
-      `https://www.youtube.com/watch?v=${videoId}`,
-    ]);
+  // android_embedded and ios bypass YouTube bot detection best from datacenter IPs
+  // They don't require cookies and avoid the "Sign in to confirm" gate
+  const playerClients = ["android_embedded", "ios", "tv_embedded", "android,web"];
 
-    const { stdout, stderr } = await execFileAsync("yt-dlp", args);
+  for (const playerClient of playerClients) {
+    try {
+      const args = getYtdlpArgs([
+        "-f", "bestaudio/best",
+        "-g",
+        "--no-warnings",
+        "--no-check-certificates",
+        "--geo-bypass",
+        "--no-cache-dir",
+        "--extractor-args", `youtube:player-client=${playerClient}`,
+        `https://www.youtube.com/watch?v=${videoId}`,
+      ]);
 
-    const url = stdout.trim();
-    if (!url) {
-      if (stderr) console.error("yt-dlp stderr:", stderr);
-      throw new Error("No URL extracted");
+      const { stdout } = await execFileAsync("yt-dlp", args, { timeout: 30000 });
+      const url = stdout.trim();
+      if (url) {
+        console.log(`yt-dlp success with player-client=${playerClient}`);
+        return url;
+      }
+    } catch (err) {
+      console.warn(`yt-dlp failed (player-client=${playerClient}):`, err.message.substring(0, 120));
     }
-    return url;
-  } catch (err) {
-    // Check for bot detection specifically
-    const isBotError = err.message.includes("confirm you're not a bot") || 
-                       err.message.includes("Sign in to confirm");
-    
-    console.error(`yt-dlp error for ${videoId}:`, {
-      message: err.message,
-      isBotError,
-      hasCookies: !!findCookiesFile()
-    });
-    
-    throw err;
   }
+
+  throw new Error("yt-dlp: all player clients failed (bot detection)");
 }

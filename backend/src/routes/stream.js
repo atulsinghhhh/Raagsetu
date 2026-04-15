@@ -66,11 +66,12 @@ router.get("/:videoId", async (req, res, next) => {
     } catch (err) {
       console.log("yt-dlp failed → trying fallbacks");
 
-      // Fallback 1: Cobalt v10 (correct endpoint is / not /api/json)
+      // Fallback 1: Cobalt v10 community instances (no JWT required)
       if (!url) {
         const cobaltInstances = [
-          "https://api.cobalt.tools",
           "https://cobalt.api.timelessnesses.me",
+          "https://cobalt.codeq.ru",
+          "https://co.wuk.sh",
           "https://cobalt.gg.lol"
         ];
         for (const cobaltBase of cobaltInstances) {
@@ -90,15 +91,11 @@ router.get("/:videoId", async (req, res, next) => {
               }),
               signal: AbortSignal.timeout(12000)
             });
-            if (r.ok) {
-              const data = await r.json();
-              console.log(`Cobalt ${cobaltBase} response:`, JSON.stringify(data).substring(0, 200));
-              if (data.url) { url = data.url; source = `cobalt:${cobaltBase}`; }
-              else if (data.status === "redirect" && data.url) { url = data.url; source = `cobalt:redirect`; }
-              else if (data.status === "stream" && data.url) { url = data.url; source = `cobalt:stream`; }
-            } else {
-              const txt = await r.text();
-              console.warn(`Cobalt ${cobaltBase} failed (${r.status}):`, txt.substring(0, 150));
+            const data = await r.json();
+            console.log(`Cobalt ${cobaltBase} (${r.status}):`, JSON.stringify(data).substring(0, 150));
+            if (data.url) { url = data.url; source = `cobalt:${new URL(cobaltBase).hostname}`; }
+            else if ((data.status === "redirect" || data.status === "stream") && data.url) {
+              url = data.url; source = `cobalt:${data.status}`;
             }
           } catch(e) { console.warn(`Cobalt ${cobaltBase} error:`, e.message); }
         }
