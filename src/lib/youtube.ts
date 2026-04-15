@@ -1,4 +1,4 @@
-import Innertube from "youtubei.js";
+import { Innertube } from "youtubei.js";
 
 let innertubeInstance: Awaited<ReturnType<typeof Innertube.create>> | null = null;
 
