@@ -94,40 +94,40 @@ app.get("/debug-stream", async (req, res) => {
   const videoId = req.query.v || "tQHAwV9B8hQ";
   const results = {};
 
-  // Test 1: Invidious - yewtu.be
+  // Test 1: Invidious - invidious.io.lol (allows datacenter IPs)
   try {
-    const r = await fetch(`https://yewtu.be/api/v1/videos/${videoId}`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(`https://invidious.io.lol/api/v1/videos/${videoId}`, { signal: AbortSignal.timeout(10000) });
     const body = r.ok ? await r.json() : null;
     const audioFormat = body?.adaptiveFormats?.find(f => f.type?.includes("audio"));
-    results.invidious_yewtu = { status: r.status, hasAudio: !!audioFormat, url: audioFormat?.url?.substring(0, 80) };
-  } catch(e) { results.invidious_yewtu = { error: e.message }; }
+    results.invidious_iolol = { status: r.status, hasAudio: !!audioFormat, url: audioFormat?.url?.substring(0, 80) };
+  } catch(e) { results.invidious_iolol = { error: e.message }; }
 
-  // Test 2: Invidious - inv.nadeko.net
+  // Test 2: Invidious - iv.ggtyler.dev
   try {
-    const r = await fetch(`https://inv.nadeko.net/api/v1/videos/${videoId}`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(`https://iv.ggtyler.dev/api/v1/videos/${videoId}`, { signal: AbortSignal.timeout(10000) });
     const body = r.ok ? await r.json() : null;
     const audioFormat = body?.adaptiveFormats?.find(f => f.type?.includes("audio"));
-    results.invidious_nadeko = { status: r.status, hasAudio: !!audioFormat, url: audioFormat?.url?.substring(0, 80) };
-  } catch(e) { results.invidious_nadeko = { error: e.message }; }
+    results.invidious_ggtyler = { status: r.status, hasAudio: !!audioFormat, url: audioFormat?.url?.substring(0, 80) };
+  } catch(e) { results.invidious_ggtyler = { error: e.message }; }
 
-  // Test 3: Piped
+  // Test 3: Cobalt v10 - CORRECT endpoint is / not /api/json
+  try {
+    const r = await fetch("https://api.cobalt.tools/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}`, downloadMode: "audio", audioFormat: "mp3" }),
+      signal: AbortSignal.timeout(12000)
+    });
+    const body = await r.json();
+    results.cobalt_v10 = { status: r.status, responseStatus: body.status, hasUrl: !!body.url, body: JSON.stringify(body).substring(0, 300) };
+  } catch(e) { results.cobalt_v10 = { error: e.message }; }
+
+  // Test 4: Piped
   try {
     const r = await fetch(`https://pipedapi.kavin.rocks/api/v1/streams/${videoId}`, { signal: AbortSignal.timeout(10000) });
     const body = r.ok ? await r.json() : null;
     results.piped_kavin = { status: r.status, hasAudio: !!(body?.audioStreams?.length) };
   } catch(e) { results.piped_kavin = { error: e.message }; }
-
-  // Test 4: Cobalt
-  try {
-    const r = await fetch("https://api.cobalt.tools/api/json", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}`, downloadMode: "audio", audioFormat: "mp3", isAudioOnly: true }),
-      signal: AbortSignal.timeout(10000)
-    });
-    const body = await r.json();
-    results.cobalt = { status: r.status, responseStatus: body.status, hasUrl: !!body.url, body: JSON.stringify(body).substring(0, 200) };
-  } catch(e) { results.cobalt = { error: e.message }; }
 
   res.json({ videoId, results });
 });

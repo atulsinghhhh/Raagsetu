@@ -66,91 +66,95 @@ router.get("/:videoId", async (req, res, next) => {
     } catch (err) {
       console.log("yt-dlp failed → trying fallbacks");
 
-      // Fallback 1: Cobalt Direct (Simplified v10)
+      // Fallback 1: Cobalt v10 (correct endpoint is / not /api/json)
       if (!url) {
-        try {
-          console.log("trying Cobalt Direct...");
-          const res = await fetch("https://api.cobalt.tools/api/json", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({
-              url: `https://www.youtube.com/watch?v=${videoId}`,
-              downloadMode: "audio",
-              audioFormat: "mp3",
-              isAudioOnly: true
-            }),
-            signal: AbortSignal.timeout(10000)
-          });
-          const data = await res.json();
-          if (data.url) {
-            url = data.url;
-            source = "cobalt:direct";
-          }
-        } catch (e) { /* tried */ }
+        const cobaltInstances = [
+          "https://api.cobalt.tools",
+          "https://cobalt.api.timelessnesses.me",
+          "https://cobalt.gg.lol"
+        ];
+        for (const cobaltBase of cobaltInstances) {
+          if (url) break;
+          try {
+            console.log(`trying Cobalt: ${cobaltBase}`);
+            const r = await fetch(`${cobaltBase}/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+              },
+              body: JSON.stringify({
+                url: `https://www.youtube.com/watch?v=${videoId}`,
+                downloadMode: "audio",
+                audioFormat: "mp3"
+              }),
+              signal: AbortSignal.timeout(12000)
+            });
+            if (r.ok) {
+              const data = await r.json();
+              console.log(`Cobalt ${cobaltBase} response:`, JSON.stringify(data).substring(0, 200));
+              if (data.url) { url = data.url; source = `cobalt:${cobaltBase}`; }
+              else if (data.status === "redirect" && data.url) { url = data.url; source = `cobalt:redirect`; }
+              else if (data.status === "stream" && data.url) { url = data.url; source = `cobalt:stream`; }
+            } else {
+              const txt = await r.text();
+              console.warn(`Cobalt ${cobaltBase} failed (${r.status}):`, txt.substring(0, 150));
+            }
+          } catch(e) { console.warn(`Cobalt ${cobaltBase} error:`, e.message); }
+        }
       }
 
-      // Fallback 2: Invidious (Most reliable currently)
+      // Fallback 2: Invidious (instances that allow API from datacenter IPs)
       if (!url) {
         const invidiousInstances = [
-          "https://yewtu.be",
-          "https://inv.tux.rs",
-          "https://invidious.nerdvpn.de",
-          "https://invidious.snopyta.org",
-          "https://invidious.flokinet.to",
-          "https://invidious.lunar.icu",
-          "https://inv.nadeko.net"
+          "https://invidious.io.lol",
+          "https://invidious.privacyredirect.com",
+          "https://iv.ggtyler.dev",
+          "https://invidious.fdn.fr",
+          "https://invidious.flokinet.to"
         ];
         for (const instance of invidiousInstances) {
           if (url) break;
           try {
             console.log(`trying Invidious: ${instance}`);
-            const response = await fetch(`${instance}/api/v1/videos/${videoId}`, {
+            const r = await fetch(`${instance}/api/v1/videos/${videoId}`, {
               signal: AbortSignal.timeout(10000)
             });
-            if (!response.ok) continue;
-
-            const data = await response.json();
-            // Try to find the best audio stream
-            const format = data.adaptiveFormats?.find(f => 
-              f.type?.includes("audio") || (f.container === "m4a" && !f.type?.includes("video"))
+            if (!r.ok) { console.warn(`Invidious ${instance}: ${r.status}`); continue; }
+            const data = await r.json();
+            const format = data.adaptiveFormats?.find(f =>
+              f.type?.includes("audio") || f.container === "m4a"
             ) || data.formatStreams?.find(f => f.type?.includes("audio"));
-            
             if (format?.url) {
               url = format.url;
               source = `invidious:${new URL(instance).hostname}`;
               console.log(`Invidious success: ${instance}`);
             }
-          } catch (e) { /* try next */ }
+          } catch(e) { console.warn(`Invidious ${instance} error:`, e.message); }
         }
       }
 
-      // Fallback 4: Piped API
+      // Fallback 3: Piped
       if (!url) {
         const pipedInstances = [
           "https://pipedapi.kavin.rocks",
           "https://api.piped.dev",
-          "https://piped-api.lunar.icu",
-          "https://pipedapi.rimgo.lol",
-          "https://pipedapi.tinfoil-hat.net"
+          "https://piped-api.lunar.icu"
         ];
-
         for (const instance of pipedInstances) {
           if (url) break;
           try {
             console.log(`trying Piped: ${instance}`);
-            const response = await fetch(`${instance}/api/v1/streams/${videoId}`, {
-              signal: AbortSignal.timeout(10000)
-            });
-            if (!response.ok) continue;
-
-            const data = await response.json();
+            const r = await fetch(`${instance}/api/v1/streams/${videoId}`, { signal: AbortSignal.timeout(8000) });
+            if (!r.ok) { console.warn(`Piped ${instance}: ${r.status}`); continue; }
+            const data = await r.json();
             const streams = data.audioStreams || [];
             if (streams.length > 0) {
               const best = streams.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
               url = best.url;
               source = `piped:${new URL(instance).hostname}`;
             }
-          } catch (e) { /* silent fail, try next */ }
+          } catch(e) { console.warn(`Piped ${instance} error:`, e.message); }
         }
       }
 
