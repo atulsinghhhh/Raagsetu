@@ -11,16 +11,32 @@ function RootNav() {
   const [playerReady, setPlayerReady] = useState(false);
 
   useEffect(() => {
+    // Safety Timeout: If initialization takes > 10s, force ready
+    const timer = setTimeout(() => {
+      if (!playerReady) {
+        console.warn("RootNav: Initialization timeout - forcing ready");
+        setPlayerReady(true);
+      }
+    }, 10000);
+
     setupAudio()
-      .then(() => setPlayerReady(true))
+      .then(() => {
+        console.log("RootNav: Audio setup complete");
+        setPlayerReady(true);
+      })
       .catch((err) => {
-        console.error("Audio setup failed:", err);
+        console.error("RootNav: Audio setup failed:", err);
         setPlayerReady(true);
       });
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!playerReady) return;
+
+    // Debug check for critical envs
+    console.log("RootNav: Auth check", { userExist: !!user, envExist: !!process.env.EXPO_PUBLIC_SUPABASE_URL });
 
     if (user) {
       router.replace("/(app)/home");
