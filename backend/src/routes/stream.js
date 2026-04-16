@@ -38,6 +38,19 @@ function getStreamCacheTtl(url) {
   return ttl > 0 ? Math.min(ttl, STREAM_TTL) : 0;
 }
 
+function isUsableUrl(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 // ---------------- ROUTE ----------------
 
 router.get("/:videoId", async (req, res, next) => {
@@ -49,7 +62,7 @@ router.get("/:videoId", async (req, res, next) => {
     const cached = forceFresh ? null : await getCache(cacheKey);
 
     // ✅ 1. Return cached if valid
-    if (cached && isStreamUrlFresh(cached)) {
+    if (cached && isUsableUrl(cached) && isStreamUrlFresh(cached)) {
       return res.json({
         success: true,
         data: { url: cached, cached: true, source: "cache" },
@@ -64,7 +77,7 @@ router.get("/:videoId", async (req, res, next) => {
       url = await extractAudioUrl(videoId);
       source = "ytdlp";
       console.log("yt-dlp success");
-    } catch (err) {
+    } catch (_err) {
       console.log("yt-dlp failed → trying play-dl...");
 
       // Fallback 0: play-dl (Node.js library, same server, different fingerprint)
@@ -105,8 +118,8 @@ router.get("/:videoId", async (req, res, next) => {
             });
             const data = await r.json();
             console.log(`Cobalt ${cobaltBase} (${r.status}):`, JSON.stringify(data).substring(0, 150));
-            if (data.url) { url = data.url; source = `cobalt:${new URL(cobaltBase).hostname}`; }
-            else if ((data.status === "redirect" || data.status === "stream") && data.url) {
+            if (isUsableUrl(data.url)) { url = data.url; source = `cobalt:${new URL(cobaltBase).hostname}`; }
+            else if ((data.status === "redirect" || data.status === "stream") && isUsableUrl(data.url)) {
               url = data.url; source = `cobalt:${data.status}`;
             }
           } catch(e) { console.warn(`Cobalt ${cobaltBase} error:`, e.message); }
@@ -134,7 +147,7 @@ router.get("/:videoId", async (req, res, next) => {
             const format = data.adaptiveFormats?.find(f =>
               f.type?.includes("audio") || f.container === "m4a"
             ) || data.formatStreams?.find(f => f.type?.includes("audio"));
-            if (format?.url) {
+            if (isUsableUrl(format?.url)) {
               url = format.url;
               source = `invidious:${new URL(instance).hostname}`;
               console.log(`Invidious success: ${instance}`);
@@ -160,20 +173,22 @@ router.get("/:videoId", async (req, res, next) => {
             const streams = data.audioStreams || [];
             if (streams.length > 0) {
               const best = streams.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
-              url = best.url;
-              source = `piped:${new URL(instance).hostname}`;
+              if (isUsableUrl(best?.url)) {
+                url = best.url;
+                source = `piped:${new URL(instance).hostname}`;
+              }
             }
           } catch(e) { console.warn(`Piped ${instance} error:`, e.message); }
         }
       }
 
-      if (!url) {
+      if (!isUsableUrl(url)) {
         throw new Error("All fallback instances failed (yt-dlp, Cobalt, Invidious, Piped)");
       }
     }
 
     // ✅ 4. Cache safely (only if URL valid & not expiring soon)
-    if (url && isStreamUrlFresh(url)) {
+    if (isUsableUrl(url) && isStreamUrlFresh(url)) {
       const cacheTtl = getStreamCacheTtl(url);
       if (cacheTtl > 0) {
         await setCache(cacheKey, url, cacheTtl);
@@ -202,7 +217,7 @@ router.get("/:videoId", async (req, res, next) => {
     return res.json({
       success: true,
       data: {
-        url,
+        url: url.trim(),
         cached: false,
         source,
       },

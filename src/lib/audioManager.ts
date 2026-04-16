@@ -2,7 +2,7 @@ import { createAudioPlayer } from "expo-audio";
 import { Song } from "@/types/song";
 import { getStreamUrl } from "@/lib/api";
 
-export const player = createAudioPlayer("");
+export const player = createAudioPlayer(null);
 
 
 export async function setupAudio() {
@@ -14,7 +14,11 @@ export async function setupAudio() {
 
 export async function playSong(song: Song) {
   try {
-    const url = song.audio_url || await getStreamUrl(song.video_id, song);
+    const url = song.audio_url?.trim() || await getStreamUrl(song.video_id, song);
+
+    if (!url) {
+      throw new Error("No playable audio URL was found for this track");
+    }
     
     player.replace(url);
     
@@ -25,7 +29,9 @@ export async function playSong(song: Song) {
     };
     
     player.play();
+    return true;
   } catch (error) {
     console.error("Error playing song:", error);
+    return false;
   }
 }

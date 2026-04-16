@@ -66,13 +66,17 @@ export function usePlayer() {
     if (index !== undefined) {
       setCurrentIndex(index);
     }
+
+    const played = await audioPlaySong(song);
+    if (!played) {
+      return;
+    }
+
     setCurrentSong(song);
-    
+
     // Step 2 & Step 11: Save to songs table and update play history
     await saveSongToSupabase(song);
     useLibraryStore.getState().addToHistory(song);
-
-    await audioPlaySong(song);
   };
 
   const skipNext = async () => {
@@ -112,6 +116,10 @@ export function usePlayer() {
   };
 
   const togglePlayPause = () => {
+    if (!currentSong) {
+      return;
+    }
+
     if (status.playing) {
       player.pause();
     } else {

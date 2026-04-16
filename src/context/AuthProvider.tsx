@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { hasSupabaseEnv, supabase } from "@/lib/supabase/client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
 
@@ -31,6 +31,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const getSession = async () => {
+        if (!hasSupabaseEnv) {
+            console.warn("Skipping session restore because Supabase env is missing.");
+            setUser(null);
+            return;
+        }
+
         try {
             const { data } = await supabase.auth.getSession();
             if (data?.session) {
@@ -47,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const updateUserProfile = async (userData: Partial<User>) => {
+        if (!hasSupabaseEnv) throw new Error("Supabase is not configured");
         if (!user) throw new Error("No user logged in");
         
         const update: any = {
@@ -66,6 +73,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const fetchUserProfile = async (userId: string): Promise<User | null> => {
+        if (!hasSupabaseEnv) return null;
+
         try {
             const { data, error } = await supabase.from('profiles').select("*").eq("id", userId).single();
             if (error) {
@@ -99,6 +108,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const signUp = async (email: string, password: string) => {
+        if (!hasSupabaseEnv) {
+            Alert.alert("Configuration error", "Supabase is not configured for this build.");
+            return;
+        }
+
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
@@ -122,6 +136,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const signIn = async (email: string, password: string) => {
+        if (!hasSupabaseEnv) {
+            Alert.alert("Configuration error", "Supabase is not configured for this build.");
+            return;
+        }
+
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
@@ -144,6 +163,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const signOut = async () => {
+        if (!hasSupabaseEnv) {
+            setUser(null);
+            return;
+        }
+
         try {
             const { error } = await supabase.auth.signOut();
             console.log("User signed out");
