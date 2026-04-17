@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAudioPlayerStatus } from "expo-audio";
-import { player, playSong as audioPlaySong } from "@/lib/audioManager";
+import { getPlayer, playSong as audioPlaySong } from "@/lib/audioManager";
 import { usePlayerStore } from "@/store/playerStore";
 import { useQueueStore } from "@/store/queueStore";
 import { useLibraryStore } from "@/store/useLibraryStore";
@@ -31,7 +31,7 @@ export function usePlayer() {
   const setIsPlaying = usePlayerStore((s: any) => s.setIsPlaying);
 
   const { queue, currentIndex, setCurrentIndex, repeatMode } = useQueueStore();
-  const status = useAudioPlayerStatus(player);
+  const status = useAudioPlayerStatus(getPlayer());
 
   // Keep isPlaying in sync with expo-audio state
   useEffect(() => {
@@ -55,8 +55,8 @@ export function usePlayer() {
 
   const handleAutoNext = async () => {
     if (repeatMode === "one") {
-      player.seekTo(0);
-      player.play();
+      getPlayer().seekTo(0);
+      getPlayer().play();
     } else {
       await skipNext();
     }
@@ -121,9 +121,9 @@ export function usePlayer() {
     }
 
     if (status.playing) {
-      player.pause();
+      getPlayer().pause();
     } else {
-      player.play();
+      getPlayer().play();
     }
   };
 

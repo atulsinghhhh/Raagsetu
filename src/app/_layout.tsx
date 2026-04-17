@@ -1,49 +1,36 @@
 import { AuthProvider, useAuth } from "@/context/AuthProvider";
 import { setupAudio } from "@/lib/audioManager";
-import { router, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View, Alert } from "react-native";
+import { ActivityIndicator, View, Text, Alert } from "react-native";
 import * as Linking from "expo-linking";
 import { acceptInvite } from "@/lib/utils/friendsHelpers";
 
+export function ErrorBoundary(props: any) {
+  return (
+    <View style={{ flex: 1, backgroundColor: "#0e0e0e", justifyContent: "center", alignItems: "center", padding: 20 }}>
+      <Text style={{ color: "#ff4444", fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>App Crash</Text>
+      <Text style={{ color: "#ccc", textAlign: "center", marginBottom: 20 }}>{props.error?.message}</Text>
+      <Text onPress={() => props.retry()} style={{ color: "#c799ff", fontSize: 16 }}>Retry</Text>
+    </View>
+  );
+}
+
 function RootNav() {
   const { user } = useAuth();
-  const [playerReady, setPlayerReady] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Safety Timeout: If initialization takes > 10s, force ready
+    // Safety Timeout for initialization
     const timer = setTimeout(() => {
-      if (!playerReady) {
-        console.warn("RootNav: Initialization timeout - forcing ready");
-        setPlayerReady(true);
-      }
-    }, 10000);
+        if (!isReady) setIsReady(true);
+    }, 8000);
 
-    setupAudio()
-      .then(() => {
-        console.log("RootNav: Audio setup complete");
-        setPlayerReady(true);
-      })
-      .catch((err) => {
-        console.error("RootNav: Audio setup failed:", err);
-        setPlayerReady(true);
-      });
-
-    return () => clearTimeout(timer);
+    setupAudio().finally(() => {
+        setIsReady(true);
+        clearTimeout(timer);
+    });
   }, []);
-
-  useEffect(() => {
-    if (!playerReady) return;
-
-    // Debug check for critical envs
-    console.log("RootNav: Auth check", { userExist: !!user, envExist: !!process.env.EXPO_PUBLIC_SUPABASE_URL });
-
-    if (user) {
-      router.replace("/(app)/home");
-    } else {
-      router.replace("/(auth)/login");
-    }
-  }, [user, playerReady]);
 
   useEffect(() => {
     if (!user) return;
@@ -63,15 +50,12 @@ function RootNav() {
       }
     };
 
-    Linking.getInitialURL().then(url => {
-      if (url) handleUrl(url);
-    });
-
+    Linking.getInitialURL().then(url => { if (url) handleUrl(url); });
     const sub = Linking.addEventListener("url", (e) => handleUrl(e.url));
     return () => sub.remove();
   }, [user]);
 
-  if (!playerReady) {
+  if (!isReady) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0e0e0e" }}>
         <ActivityIndicator color="#c799ff" size="large" />
@@ -79,12 +63,7 @@ function RootNav() {
     );
   }
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(app)" />
-    </Stack>
-  );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 export default function RootLayout() {
@@ -94,3 +73,8 @@ export default function RootLayout() {
     </AuthProvider>
   );
 }
+
+
+
+
+

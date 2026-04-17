@@ -1,13 +1,10 @@
-import { Innertube } from "youtubei.js";
+// Use the pre-bundled web version of youtubei.js to avoid Metro resolution/cycle issues.
+let innertubeInstance: any = null;
 
-let innertubeInstance: Awaited<ReturnType<typeof Innertube.create>> | null = null;
-
-/**
- * Get or create a singleton Innertube instance.
- * Reuses the same instance across the app lifetime for efficiency.
- */
 async function getInnertube() {
   if (!innertubeInstance) {
+    // @ts-ignore
+    const { Innertube } = require("youtubei.js/web.bundle");
     innertubeInstance = await Innertube.create({
       generate_session_locally: true,
     });
@@ -15,10 +12,10 @@ async function getInnertube() {
   return innertubeInstance;
 }
 
+
+
 /**
  * Extract a direct audio stream URL for a YouTube video.
- * Runs entirely on the client device — no server needed.
- * Uses the user's real IP, which YouTube doesn't block.
  */
 export async function extractAudioUrl(videoId: string): Promise<string> {
   const yt = await getInnertube();
@@ -43,13 +40,11 @@ export async function extractAudioUrl(videoId: string): Promise<string> {
     throw new Error("Failed to decipher audio URL");
   }
 
-  console.log(`[youtube.ts] extracted audio: bitrate=${best.bitrate}, mime=${best.mime_type}`);
   return url;
 }
 
 /**
  * Search YouTube for songs directly from the client.
- * Can be used as a fallback if the backend search also gets blocked.
  */
 export async function searchYouTube(query: string) {
   const yt = await getInnertube();
@@ -63,3 +58,5 @@ export async function searchYouTube(query: string) {
     duration_sec: video.duration?.seconds ?? 0,
   }));
 }
+
+

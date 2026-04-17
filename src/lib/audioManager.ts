@@ -2,13 +2,27 @@ import { createAudioPlayer } from "expo-audio";
 import { Song } from "@/types/song";
 import { getStreamUrl } from "@/lib/api";
 
-export const player = createAudioPlayer(null);
+// Lazy-initialize the audio player to avoid crashes during static web rendering
+// (Node.js has no browser Audio API).
+let _player: ReturnType<typeof createAudioPlayer> | null = null;
+
+export function getPlayer() {
+  if (!_player) {
+    _player = createAudioPlayer(null);
+  }
+  return _player;
+}
+
+// Keep backward-compatible named export.
+// On web during SSR this will be null; at runtime callers should use getPlayer().
+export const player = typeof window !== "undefined"
+  ? getPlayer()
+  : (null as unknown as ReturnType<typeof createAudioPlayer>);
 
 
 export async function setupAudio() {
-  // In expo-audio, basic setup is often unnecessary beyond creation,
-  // but we can configure audio session here if needed.
-  // For now, creation is enough.
+  // Ensure the player is created (safe at runtime)
+  getPlayer();
 }
 
 
@@ -20,15 +34,16 @@ export async function playSong(song: Song) {
       throw new Error("No playable audio URL was found for this track");
     }
     
-    player.replace(url);
+    const p = getPlayer();
+    p.replace(url);
     
-    (player as any).metadata = {
+    (p as any).metadata = {
       title: song.title,
       artist: song.artist,
       artwork: song.thumbnail,
     };
     
-    player.play();
+    p.play();
     return true;
   } catch (error) {
     console.error("Error playing song:", error);

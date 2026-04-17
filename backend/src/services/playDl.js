@@ -14,7 +14,17 @@ export async function extractWithPlayDl(videoId) {
       quality: 1, // High quality
       seek: 0
     });
-    
+
+    const innerStream = stream?.stream;
+    if (innerStream && typeof innerStream.on === "function") {
+      innerStream.on("error", (error) => {
+        console.warn("play-dl inner stream error:", error.message);
+      });
+      if (typeof innerStream.destroy === "function") {
+        innerStream.destroy();
+      }
+    }
+
     if (stream?.url) {
       console.log(`play-dl stream success: ${stream.type}`);
       return stream.url;

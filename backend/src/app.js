@@ -38,6 +38,11 @@ app.get("/debug", async (req, res) => {
   }
 });
 
+app.get("/", (_req, res) => {
+  res.json({ status: "ok", service: "Raagsetu backend" });
+});
+
+
 app.get("/debug-cookies", (req, res) => {
   try {
     const cookiesPath = findCookiesFile();

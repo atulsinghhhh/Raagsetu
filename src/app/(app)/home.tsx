@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { setAudioModeAsync } from "expo-audio";
-import { player as globalPlayer } from "@/lib/audioManager";
+import { getPlayer } from "@/lib/audioManager";
 import { usePlayer } from "@/hook/usePlayer";
 import { useQueueStore } from "@/store/queueStore";
 import { useLibraryStore } from "@/store/useLibraryStore";
@@ -119,8 +119,8 @@ export default function HomeScreen() {
     };
 
     if (playingId === track.id) {
-      if (status.playing) globalPlayer.pause(); 
-      else globalPlayer.play();
+      if (status.playing) getPlayer().pause(); 
+      else getPlayer().play();
       return;
     }
 
@@ -130,8 +130,8 @@ export default function HomeScreen() {
 
   const handlePlayYT = (song: Song, index: number) => {
     if (playingId === song.video_id) {
-      if (status.playing) globalPlayer.pause();
-      else globalPlayer.play();
+      if (status.playing) getPlayer().pause();
+      else getPlayer().play();
       return;
     }
     // Set index relative to YT list (or total queue)

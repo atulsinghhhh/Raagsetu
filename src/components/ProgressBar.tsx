@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useAudioPlayerStatus } from "expo-audio";
-import { player } from "@/lib/audioManager";
+import { getPlayer } from "@/lib/audioManager";
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -10,7 +10,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function ProgressBar() {
-  const status = useAudioPlayerStatus(player);
+  const status = useAudioPlayerStatus(getPlayer());
   const { currentTime: position, duration } = status;
 
   const pct = duration > 0 ? (position / duration) * 100 : 0;
