@@ -2,9 +2,10 @@ import { useAuth } from "@/context/AuthProvider";
 import { useState, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Alert,View,Text,TextInput,TouchableOpacity,StyleSheet,KeyboardAvoidingView,Platform,Animated,ActivityIndicator,ScrollView,} from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 
 function SignupScreen() {
+  const router=useRouter();
   const { signUp } = useAuth();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -47,6 +48,7 @@ function SignupScreen() {
     setLoading(true);
     try {
       await signUp(email, password);
+      router.replace("/(app)/home");
     } catch (error) {
       Alert.alert("Sign Up Failed", (error as Error).message);
     } finally {

@@ -1,6 +1,6 @@
 import { AuthProvider, useAuth } from "@/context/AuthProvider";
 import { setupAudio } from "@/lib/audioManager";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View, Text, Alert } from "react-native";
 import * as Linking from "expo-linking";
@@ -18,6 +18,8 @@ export function ErrorBoundary(props: any) {
 
 function RootNav() {
   const { user } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -31,6 +33,22 @@ function RootNav() {
         clearTimeout(timer);
     });
   }, []);
+
+  // Global Auth Guard
+  useEffect(() => {
+    if (!isReady) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+    const inAppGroup = segments[0] === "(app)";
+
+    if (user && inAuthGroup) {
+      // User is logged in but in auth routes (login/signup) -> Send to home
+      router.replace("/(app)/home");
+    } else if (!user && !inAuthGroup) {
+      // User is not logged in and not in auth routes -> Send to login
+      router.replace("/(auth)/login");
+    }
+  }, [user, segments, isReady]);
 
   useEffect(() => {
     if (!user) return;
@@ -65,6 +83,7 @@ function RootNav() {
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }
+
 
 export default function RootLayout() {
   return (

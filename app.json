@@ -27,7 +27,6 @@
       "fallbackToCacheTimeout": 0
     },
 
-    "jsEngine": "hermes",
 
     "ios": {
       "bundleIdentifier": "com.atulsinghh.raagsetu",

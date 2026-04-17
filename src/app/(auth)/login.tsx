@@ -14,10 +14,11 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 
 function LoginScreen() {
   const { signIn } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,7 @@ function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email, password);
+      router.replace("/(app)/home");
     } catch (error) {
       Alert.alert("Sign In Failed", (error as Error).message);
     } finally {
